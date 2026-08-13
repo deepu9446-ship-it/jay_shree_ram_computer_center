@@ -13,120 +13,12 @@ class JsrcApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Jay Shree Ram Computer Center',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.orange,
+        ),
         useMaterial3: true,
       ),
-      home: const LoginPage(),
-    );
-  }
-}
-
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
-
-  @override
-  State<LoginPage> createState() => _LoginPageState();
-}
-
-class _LoginPageState extends State<LoginPage> {
-  final usernameController = TextEditingController();
-  final passwordController = TextEditingController();
-
-  void login() {
-    if (usernameController.text.trim() == 'admin' &&
-        passwordController.text == '1234') {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const DashboardPage(),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Username या Password गलत है'),
-        ),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Card(
-              elevation: 8,
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  children: [
-                    const Icon(
-                      Icons.computer,
-                      size: 70,
-                      color: Colors.orange,
-                    ),
-                    const SizedBox(height: 15),
-                    const Text(
-                      'JAY SHREE RAM',
-                      style: TextStyle(
-                        fontSize: 25,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const Text(
-                      'COMPUTER CENTER',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 30),
-                    TextField(
-                      controller: usernameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Username',
-                        prefixIcon: Icon(Icons.person),
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    TextField(
-                      controller: passwordController,
-                      obscureText: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: Icon(Icons.lock),
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: login,
-                        child: const Text(
-                          'LOGIN',
-                          style: TextStyle(fontSize: 17),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    const Text(
-                      'Demo Login: admin / 1234',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
+      home: const DashboardPage(),
     );
   }
 }
@@ -138,17 +30,29 @@ class DashboardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Jay Shree Ram Computer Center'),
+        title: const Text(
+          'Jay Shree Ram Computer Center',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.orange,
         foregroundColor: Colors.white,
       ),
-      drawer: Drawer(
-        child: ListView(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.orange),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Colors.orange, Colors.deepOrange],
+                ),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(
                     Icons.computer,
@@ -157,126 +61,178 @@ class DashboardPage extends StatelessWidget {
                   ),
                   SizedBox(height: 10),
                   Text(
-                    'JSRC Dashboard',
+                    'JAY SHREE RAM',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 20,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    'COMPUTER CENTER',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Student Management Dashboard',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
                     ),
                   ),
                 ],
               ),
             ),
-            ListTile(
-              leading: const Icon(Icons.dashboard),
-              title: const Text('Dashboard'),
-              onTap: () => Navigator.pop(context),
+
+            const SizedBox(height: 20),
+
+            const Text(
+              'Dashboard',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            ListTile(
-              leading: const Icon(Icons.people),
-              title: const Text('Students'),
-              onTap: () {},
+
+            const SizedBox(height: 15),
+
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 1.15,
+              children: [
+                _dashboardCard(
+                  context,
+                  Icons.people,
+                  'Students',
+                  'Student Records',
+                ),
+                _dashboardCard(
+                  context,
+                  Icons.fact_check,
+                  'Attendance',
+                  'Daily Attendance',
+                ),
+                _dashboardCard(
+                  context,
+                  Icons.location_on,
+                  'Location',
+                  'Student Location',
+                ),
+                _dashboardCard(
+                  context,
+                  Icons.face,
+                  'Face / Eye',
+                  'Verification',
+                ),
+                _dashboardCard(
+                  context,
+                  Icons.currency_rupee,
+                  'Fees',
+                  'Fee Management',
+                ),
+                _dashboardCard(
+                  context,
+                  Icons.workspace_premium,
+                  'Certificates',
+                  'Certificates',
+                ),
+              ],
             ),
-            ListTile(
-              leading: const Icon(Icons.currency_rupee),
-              title: const Text('Fees Management'),
-              onTap: () {},
-            ),
-            ListTile(
-              leading: const Icon(Icons.event_available),
-              title: const Text('Attendance'),
-              onTap: () {},
-            ),
-            ListTile(
-              leading: const Icon(Icons.location_on),
-              title: const Text('Student Tracking'),
-              onTap: () {},
-            ),
-            ListTile(
-              leading: const Icon(Icons.card_membership),
-              title: const Text('Certificates'),
-              onTap: () {},
+
+            const SizedBox(height: 20),
+
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Colors.orange.shade200,
+                ),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Courses',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  Text('• PGDCA   • DCA   • ADCA'),
+                  Text('• Tally Prime GST   • CPCT'),
+                  Text('• Hindi & English Typing'),
+                  Text('• Photoshop / DTP   • CorelDraw'),
+                  Text('• AI Tools   • Basic Computer'),
+                ],
+              ),
             ),
           ],
         ),
       ),
-      body: GridView.count(
-        padding: const EdgeInsets.all(20),
-        crossAxisCount: 2,
-        crossAxisSpacing: 15,
-        mainAxisSpacing: 15,
-        children: const [
-          DashboardCard(
-            title: 'Students',
-            value: '0',
-            icon: Icons.people,
-          ),
-          DashboardCard(
-            title: 'Fees',
-            value: '₹0',
-            icon: Icons.currency_rupee,
-          ),
-          DashboardCard(
-            title: 'Attendance',
-            value: '0%',
-            icon: Icons.event_available,
-          ),
-          DashboardCard(
-            title: 'Certificates',
-            value: '0',
-            icon: Icons.card_membership,
-          ),
-        ],
-      ),
     );
   }
-}
 
-class DashboardCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final IconData icon;
-
-  const DashboardCard({
-    super.key,
-    required this.title,
-    required this.value,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  static Widget _dashboardCard(
+    BuildContext context,
+    IconData icon,
+    String title,
+    String subtitle,
+  ) {
     return Card(
-      elevation: 5,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 42,
-              color: Colors.orange,
+      elevation: 3,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('$title section selected'),
             ),
-            const SizedBox(height: 10),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.bold,
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 42,
+                color: Colors.orange,
               ),
-            ),
-            const SizedBox(height: 5),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 25,
-                fontWeight: FontWeight.bold,
+              const SizedBox(height: 8),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
+
