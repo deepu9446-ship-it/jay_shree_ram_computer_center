@@ -35,151 +35,50 @@ class DashboardPage extends StatelessWidget {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.orange,
-        foregroundColor: Colors.white,
       ),
-      body: SingleChildScrollView(
+      body: GridView.count(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Colors.orange, Colors.deepOrange],
-                ),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    Icons.computer,
-                    size: 55,
-                    color: Colors.white,
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    'JAY SHREE RAM',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    'COMPUTER CENTER',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Student Management Dashboard',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            const Text(
-              'Dashboard',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 15),
-
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 1.15,
-              children: [
-                _dashboardCard(
-                  context,
-                  Icons.people,
-                  'Students',
-                  'Student Records',
-                ),
-                _dashboardCard(
-                  context,
-                  Icons.fact_check,
-                  'Attendance',
-                  'Daily Attendance',
-                ),
-                _dashboardCard(
-                  context,
-                  Icons.location_on,
-                  'Location',
-                  'Student Location',
-                ),
-                _dashboardCard(
-                  context,
-                  Icons.face,
-                  'Face / Eye',
-                  'Verification',
-                ),
-                _dashboardCard(
-                  context,
-                  Icons.currency_rupee,
-                  'Fees',
-                  'Fee Management',
-                ),
-                _dashboardCard(
-                  context,
-                  Icons.workspace_premium,
-                  'Certificates',
-                  'Certificates',
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 20),
-
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: Colors.orange.shade50,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Colors.orange.shade200,
-                ),
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Courses',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  Text('• PGDCA   • DCA   • ADCA'),
-                  Text('• Tally Prime GST   • CPCT'),
-                  Text('• Hindi & English Typing'),
-                  Text('• Photoshop / DTP   • CorelDraw'),
-                  Text('• AI Tools   • Basic Computer'),
-                ],
-              ),
-            ),
-          ],
-        ),
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        children: [
+          _dashboardCard(
+            context,
+            Icons.people,
+            'Students',
+            'Manage Students',
+          ),
+          _dashboardCard(
+            context,
+            Icons.check_circle,
+            'Attendance',
+            'Mark Attendance',
+          ),
+          _dashboardCard(
+            context,
+            Icons.location_on,
+            'Location',
+            'GPS Location',
+          ),
+          _dashboardCard(
+            context,
+            Icons.face,
+            'Face Verification',
+            'Verify Student',
+          ),
+          _dashboardCard(
+            context,
+            Icons.currency_rupee,
+            'Fees',
+            'Manage Fees',
+          ),
+          _dashboardCard(
+            context,
+            Icons.workspace_premium,
+            'Certificates',
+            'Student Certificates',
+          ),
+        ],
       ),
     );
   }
@@ -191,16 +90,25 @@ class DashboardPage extends StatelessWidget {
     String subtitle,
   ) {
     return Card(
-      elevation: 3,
+      elevation: 4,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('$title section selected'),
-            ),
-          );
-        },
+  if (title == 'Students') {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const StudentsPage(),
+      ),
+    );
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$title section selected'),
+      ),
+    );
+  }
+},
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Column(
@@ -214,18 +122,18 @@ class DashboardPage extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 title,
+                textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 17,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 5),
               Text(
                 subtitle,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
+                  fontSize: 13,
                 ),
               ),
             ],
@@ -236,3 +144,163 @@ class DashboardPage extends StatelessWidget {
   }
 }
 
+class StudentsPage extends StatefulWidget {
+  const StudentsPage({super.key});
+
+  @override
+  State<StudentsPage> createState() => _StudentsPageState();
+}
+
+class _StudentsPageState extends State<StudentsPage> {
+  final List<Map<String, String>> students = [];
+
+  void _addStudent() {
+    final nameController = TextEditingController();
+    final mobileController = TextEditingController();
+    final courseController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Add Student'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Student Name',
+                    prefixIcon: Icon(Icons.person),
+                  ),
+                ),
+                TextField(
+                  controller: mobileController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: 'Mobile Number',
+                    prefixIcon: Icon(Icons.phone),
+                  ),
+                ),
+                TextField(
+                  controller: courseController,
+                  decoration: const InputDecoration(
+                    labelText: 'Course',
+                    prefixIcon: Icon(Icons.school),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (nameController.text.trim().isEmpty) {
+                  return;
+                }
+
+                setState(() {
+                  students.add({
+                    'name': nameController.text.trim(),
+                    'mobile': mobileController.text.trim(),
+                    'course': courseController.text.trim(),
+                  });
+                });
+
+                Navigator.pop(context);
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _deleteStudent(int index) {
+    setState(() {
+      students.removeAt(index);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Students'),
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
+      ),
+      body: students.isEmpty
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.people_outline,
+                    size: 80,
+                    color: Colors.orange,
+                  ),
+                  SizedBox(height: 15),
+                  Text(
+                    'No Students Added',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text('Tap + to add a student'),
+                ],
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(12),
+              itemCount: students.length,
+              itemBuilder: (context, index) {
+                final student = students[index];
+
+                return Card(
+                  child: ListTile(
+                    leading: const CircleAvatar(
+                      backgroundColor: Colors.orange,
+                      child: Icon(
+                        Icons.person,
+                        color: Colors.white,
+                      ),
+                    ),
+                    title: Text(
+                      student['name'] ?? '',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Text(
+                      'Mobile: ${student['mobile'] ?? ''}\n'
+                      'Course: ${student['course'] ?? ''}',
+                    ),
+                    isThreeLine: true,
+                    trailing: IconButton(
+                      icon: const Icon(
+                        Icons.delete,
+                        color: Colors.red,
+                      ),
+                      onPressed: () => _deleteStudent(index),
+                    ),
+                  ),
+                );
+              },
+            ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _addStudent,
+        backgroundColor: Colors.orange,
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
