@@ -353,7 +353,7 @@ class _AttendancePageState extends State<AttendancePage> {
               ),
               trailing: Switch(
                 value: present,
-                activeColor: Colors.orange,
+                activeThumbColor: Colors.orange,
                 onChanged: (value) {
                   setState(() {
                     attendance[name] = value;
