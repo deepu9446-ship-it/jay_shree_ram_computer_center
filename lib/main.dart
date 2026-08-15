@@ -304,3 +304,66 @@ class _StudentsPageState extends State<StudentsPage> {
     );
   }
 }
+
+
+class AttendancePage extends StatefulWidget {
+  const AttendancePage({super.key});
+
+  @override
+  State<AttendancePage> createState() => _AttendancePageState();
+}
+
+class _AttendancePageState extends State<AttendancePage> {
+  final Map<String, bool> attendance = {};
+
+  final List<String> students = [
+    'Student 1',
+    'Student 2',
+    'Student 3',
+    'Student 4',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Attendance'),
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
+      ),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(12),
+        itemCount: students.length,
+        itemBuilder: (context, index) {
+          final name = students[index];
+          final present = attendance[name] ?? false;
+
+          return Card(
+            child: ListTile(
+              leading: const CircleAvatar(
+                backgroundColor: Colors.orange,
+                child: Icon(Icons.person, color: Colors.white),
+              ),
+              title: Text(
+                name,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(
+                present ? 'Present' : 'Absent',
+              ),
+              trailing: Switch(
+                value: present,
+                activeColor: Colors.orange,
+                onChanged: (value) {
+                  setState(() {
+                    attendance[name] = value;
+                  });
+                },
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
