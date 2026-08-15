@@ -30,11 +30,29 @@ class DashboardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Jay Shree Ram Computer Center',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
         backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
+        title: Row(
+          children: [
+            Image.asset(
+              'assets/icon/jay_shree_ram_logo.png',
+              width: 42,
+              height: 42,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                'Jay Shree Ram Computer Center',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
       ),
       body: GridView.count(
         padding: const EdgeInsets.all(16),
