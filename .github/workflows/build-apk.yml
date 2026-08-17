@@ -20,7 +20,6 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-          cache: gradle
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -29,14 +28,28 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Flutter Doctor
+        run: flutter doctor -v
+
       - name: Flutter Pub Get
         run: flutter pub get
 
-      - name: Build APK
-        run: flutter build apk --release
+      - name: Flutter Analyze
+        run: flutter analyze
+
+      - name: Build Release APK
+        run: flutter build apk --release --verbose
+
+      - name: Check APK
+        if: always()
+        run: |
+          echo "Checking APK files..."
+          find build -type f -name "*.apk" -print || true
 
       - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: jay-shree-ram-computer-center-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: build/app/outputs/flutter-apk/*.apk
+          if-no-files-found: error
