@@ -17,16 +17,192 @@ class JsrcApp extends StatelessWidget {
         colorSchemeSeed: Colors.orange,
         scaffoldBackgroundColor: const Color(0xFFFFF8F1),
       ),
-      home: const DashboardPage(),
+      home: const LoginPage(),
     );
   }
 }
+
+// ================= LOGIN =================
+
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final usernameController = TextEditingController();
+  final passwordController = TextEditingController();
+  bool hidePassword = true;
+
+  void login() {
+    if (usernameController.text.trim() == 'admin' &&
+        passwordController.text == '123456') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const DashboardPage()),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Invalid username or password'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFFF9800),
+              Color(0xFFE65100),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Card(
+                elevation: 8,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      Image.asset(
+                        'assets/icon/jay_shree_ram_logo.png',
+                        width: 100,
+                        height: 100,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const CircleAvatar(
+                          radius: 50,
+                          child: Icon(Icons.computer, size: 50),
+                        ),
+                      ),
+                      const SizedBox(height: 15),
+                      const Text(
+                        'Jay Shree Ram',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFE65100),
+                        ),
+                      ),
+                      const Text(
+                        'Computer Center',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 25),
+                      const Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Admin Login',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 15),
+                      TextField(
+                        controller: usernameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Username',
+                          prefixIcon: Icon(Icons.person),
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 15),
+                      TextField(
+                        controller: passwordController,
+                        obscureText: hidePassword,
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          prefixIcon: const Icon(Icons.lock),
+                          border: const OutlineInputBorder(),
+                          suffixIcon: IconButton(
+                            onPressed: () {
+                              setState(() {
+                                hidePassword = !hidePassword;
+                              });
+                            },
+                            icon: Icon(
+                              hidePassword
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton.icon(
+                          onPressed: login,
+                          icon: const Icon(Icons.login),
+                          label: const Text(
+                            'LOGIN',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'Demo: admin / 123456',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ================= DASHBOARD =================
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
 
   static const orange = Color(0xFFF57C00);
-  static const darkOrange = Color(0xFFE65100);
+
+  void openPage(
+    BuildContext context,
+    String title,
+    IconData icon,
+  ) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FeaturePage(
+          title: title,
+          icon: icon,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,12 +216,12 @@ class DashboardPage extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () => _openPage(
+            onPressed: () => openPage(
               context,
               'Notifications',
               Icons.notifications,
             ),
+            icon: const Icon(Icons.notifications_outlined),
           ),
         ],
       ),
@@ -55,9 +231,8 @@ class DashboardPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _welcomeCard(),
-            const SizedBox(height: 18),
-
+            _welcomeCard(context),
+            const SizedBox(height: 20),
             const Text(
               'Quick Access',
               style: TextStyle(
@@ -66,21 +241,20 @@ class DashboardPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-
             GridView.count(
               crossAxisCount: 2,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              childAspectRatio: 1.35,
+              childAspectRatio: 1.3,
               children: [
                 DashboardItem(
                   icon: Icons.people_alt,
                   title: 'Students',
                   subtitle: 'Manage students',
                   color: Colors.blue,
-                  onTap: () => _openPage(
+                  onTap: () => openPage(
                     context,
                     'Students',
                     Icons.people_alt,
@@ -91,7 +265,7 @@ class DashboardPage extends StatelessWidget {
                   title: 'Attendance',
                   subtitle: 'Daily attendance',
                   color: Colors.green,
-                  onTap: () => _openPage(
+                  onTap: () => openPage(
                     context,
                     'Attendance',
                     Icons.fact_check,
@@ -102,7 +276,7 @@ class DashboardPage extends StatelessWidget {
                   title: 'Location',
                   subtitle: 'GPS tracking',
                   color: Colors.red,
-                  onTap: () => _openPage(
+                  onTap: () => openPage(
                     context,
                     'Location',
                     Icons.location_on,
@@ -113,18 +287,32 @@ class DashboardPage extends StatelessWidget {
                   title: 'Fees',
                   subtitle: 'Fee management',
                   color: Colors.purple,
-                  onTap: () => _openPage(
+                  onTap: () => openPage(
                     context,
                     'Fees',
                     Icons.currency_rupee,
                   ),
                 ),
                 DashboardItem(
+                  icon: Icons.qr_code_2,
+                  title: 'UPI QR',
+                  subtitle: 'Scan & Pay',
+                  color: Colors.indigo,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const PaymentPage(),
+                      ),
+                    );
+                  },
+                ),
+                DashboardItem(
                   icon: Icons.verified,
                   title: 'Certificates',
                   subtitle: 'Student certificates',
                   color: Colors.teal,
-                  onTap: () => _openPage(
+                  onTap: () => openPage(
                     context,
                     'Certificates',
                     Icons.verified,
@@ -134,18 +322,27 @@ class DashboardPage extends StatelessWidget {
                   icon: Icons.face,
                   title: 'Face / Eye',
                   subtitle: 'Verification',
-                  color: Colors.indigo,
-                  onTap: () => _openPage(
+                  color: Colors.deepPurple,
+                  onTap: () => openPage(
                     context,
                     'Face / Eye Verification',
                     Icons.face,
                   ),
                 ),
+                DashboardItem(
+                  icon: Icons.settings,
+                  title: 'Settings',
+                  subtitle: 'Admin settings',
+                  color: Colors.grey,
+                  onTap: () => openPage(
+                    context,
+                    'Admin Settings',
+                    Icons.settings,
+                  ),
+                ),
               ],
             ),
-
-            const SizedBox(height: 22),
-
+            const SizedBox(height: 24),
             const Text(
               'Popular Courses',
               style: TextStyle(
@@ -154,46 +351,67 @@ class DashboardPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-
-            _courseCard(
-              context,
-            Icons.computer,
-            'Basic Computer',
-            'Computer fundamentals',
+            CourseCard(
+              icon: Icons.computer,
+              title: 'Basic Computer',
+              subtitle: 'Computer fundamentals',
+              onTap: () => openPage(
+                context,
+                'Basic Computer',
+                Icons.computer,
+              ),
             ),
-            _courseCard(
-              context,
-              Icons.calculate,
-              'Tally Prime GST',
-              'Accounting & GST training',
+            CourseCard(
+              icon: Icons.calculate,
+              title: 'Tally Prime GST',
+              subtitle: 'Accounting & GST training',
+              onTap: () => openPage(
+                context,
+                'Tally Prime GST',
+                Icons.calculate,
+              ),
             ),
-            _courseCard(
-              context,
-              Icons.keyboard,
-              'CPCT & Typing',
-              'Hindi & English typing',
+            CourseCard(
+              icon: Icons.keyboard,
+              title: 'CPCT & Typing',
+              subtitle: 'Hindi & English typing',
+              onTap: () => openPage(
+                context,
+                'CPCT & Typing',
+                Icons.keyboard,
+              ),
             ),
-            _courseCard(
-              context,
-              Icons.design_services,
-              'Photoshop / CorelDraw',
-              'Design & graphics training',
+            CourseCard(
+              icon: Icons.design_services,
+              title: 'Photoshop / CorelDraw',
+              subtitle: 'Design & graphics training',
+              onTap: () => openPage(
+                context,
+                'Photoshop / CorelDraw',
+                Icons.design_services,
+              ),
             ),
-            _courseCard(
-              context,
-              Icons.table_chart,
-              'Atom Advance Tally Office Management',
-              'Office & accounting training',
+            CourseCard(
+              icon: Icons.table_chart,
+              title: 'ATOM Advance Tally Office Management',
+              subtitle: 'Office & accounting training',
+              onTap: () => openPage(
+                context,
+                'ATOM Advance Tally Office Management',
+                Icons.table_chart,
+              ),
             ),
-            _courseCard(
-              context,
-              Icons.data_object,
-              'Data Entry',
-              'Computer data entry training',
+            CourseCard(
+              icon: Icons.data_object,
+              title: 'Data Entry',
+              subtitle: 'Computer data entry training',
+              onTap: () => openPage(
+                context,
+                'Data Entry',
+                Icons.data_object,
+              ),
             ),
-
-            const SizedBox(height: 18),
-
+            const SizedBox(height: 10),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(18),
@@ -222,7 +440,6 @@ class DashboardPage extends StatelessWidget {
                     'Computer Education • Job Training • Skill Development',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 14,
                     ),
                   ),
                   SizedBox(height: 6),
@@ -242,10 +459,10 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _welcomeCard() {
+  Widget _welcomeCard(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [
@@ -254,46 +471,44 @@ class DashboardPage extends StatelessWidget {
           ],
         ),
         borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-            color: Colors.orange.withValues(alpha: 0.25),
-          ),
-        ],
       ),
-      child: const Row(
+      child: Row(
         children: [
           ClipOval(
-  child: Container(
-    width: 70,
-    height: 70,
-    color: Colors.white,
-    padding: const EdgeInsets.all(5),
-    child: Image.asset(
-      'assets/icon/jay_shree_ram_logo.png',
-      fit: BoxFit.contain,
-    ),
-  ),
-),
-          SizedBox(width: 16),
-          Expanded(
+            child: Container(
+              color: Colors.white,
+              width: 70,
+              height: 70,
+              padding: const EdgeInsets.all(8),
+              child: Image.asset(
+                'assets/icon/jay_shree_ram_logo.png',
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const Icon(
+                  Icons.computer,
+                  size: 40,
+                  color: orange,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 15),
+          const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Welcome!',
+                  'Welcome, Admin!',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 17,
+                    fontSize: 16,
                   ),
                 ),
-                SizedBox(height: 3),
+                SizedBox(height: 4),
                 Text(
                   'Jay Shree Ram Computer Center',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 19,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -302,7 +517,6 @@ class DashboardPage extends StatelessWidget {
                   'Your future, your first step',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 13,
                   ),
                 ),
               ],
@@ -312,60 +526,9 @@ class DashboardPage extends StatelessWidget {
       ),
     );
   }
-
-  Widget _courseCard(
-    BuildContext context,
-    IconData icon,
-    String title,
-    String subtitle,
-  ) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 4,
-        ),
-        leading: CircleAvatar(
-          backgroundColor: Colors.orange.shade50,
-          child: Icon(
-            icon,
-            color: orange,
-          ),
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        subtitle: Text(subtitle),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: () => _openPage(context, title, icon),
-      ),
-    );
-  }
-
-  void _openPage(
-    BuildContext context,
-    String title,
-    IconData icon,
-  ) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => FeaturePage(
-          title: title,
-          icon: icon,
-        ),
-      ),
-    );
-  }
 }
+
+// ================= DASHBOARD ITEM =================
 
 class DashboardItem extends StatelessWidget {
   final IconData icon;
@@ -394,7 +557,7 @@ class DashboardItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -403,14 +566,14 @@ class DashboardItem extends StatelessWidget {
                 backgroundColor: color.withValues(alpha: 0.12),
                 child: Icon(icon, color: color),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 9),
               Text(
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  fontSize: 15,
                 ),
               ),
               const SizedBox(height: 3),
@@ -420,7 +583,7 @@ class DashboardItem extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: Colors.grey.shade700,
-                  fontSize: 12,
+                  fontSize: 11,
                 ),
               ),
             ],
@@ -431,16 +594,86 @@ class DashboardItem extends StatelessWidget {
   }
 }
 
+// ================= COURSE CARD =================
+
+class CourseCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const CourseCard({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: Colors.orange.shade50,
+          child: Icon(
+            icon,
+            color: Colors.orange.shade800,
+          ),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(subtitle),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+        onTap: onTap,
+      ),
+    );
+  }
+}
+
+// ================= DRAWER =================
+
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
+
+  void open(
+    BuildContext context,
+    String title,
+    IconData icon,
+  ) {
+    Navigator.pop(context);
+
+    if (title == 'Payment') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const PaymentPage(),
+        ),
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FeaturePage(
+          title: title,
+          icon: icon,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      child: Column(
+      child: ListView(
+        padding: EdgeInsets.zero,
         children: [
           Container(
-            width: double.infinity,
             padding: const EdgeInsets.fromLTRB(20, 55, 20, 22),
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -450,32 +683,46 @@ class AppDrawer extends StatelessWidget {
                 ],
               ),
             ),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                CircleAvatar(
-                  radius: 34,
-                  backgroundColor: Colors.white,
-                  child: Icon(
-                    Icons.computer,
-                    size: 38,
-                    color: Color(0xFFF57C00),
+                ClipOval(
+                  child: Container(
+                    color: Colors.white,
+                    width: 65,
+                    height: 65,
+                    padding: const EdgeInsets.all(7),
+                    child: Image.asset(
+                      'assets/icon/jay_shree_ram_logo.png',
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.computer,
+                        color: Colors.orange,
+                        size: 38,
+                      ),
+                    ),
                   ),
                 ),
-                SizedBox(height: 12),
-                Text(
-                  'JSRC',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  'Jay Shree Ram Computer Center',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'JSRC',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        'Jay Shree Ram Computer Center',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -485,71 +732,74 @@ class AppDrawer extends StatelessWidget {
             context,
             Icons.dashboard,
             'Dashboard',
-            const DashboardPage(),
           ),
           _item(
             context,
             Icons.people_alt,
             'Students',
-            const FeaturePage(
-              title: 'Students',
-              icon: Icons.people_alt,
-            ),
           ),
           _item(
             context,
             Icons.fact_check,
             'Attendance',
-            const FeaturePage(
-              title: 'Attendance',
-              icon: Icons.fact_check,
-            ),
           ),
           _item(
             context,
             Icons.currency_rupee,
             'Fees',
-            const FeaturePage(
-              title: 'Fees',
-              icon: Icons.currency_rupee,
-            ),
           ),
           _item(
             context,
-            Icons.school,
-            'Courses',
-            const FeaturePage(
-              title: 'Courses',
-              icon: Icons.school,
-            ),
+            Icons.qr_code_2,
+            'Payment',
+          ),
+          _item(
+            context,
+            Icons.location_on,
+            'Location',
           ),
           _item(
             context,
             Icons.verified,
             'Certificates',
-            const FeaturePage(
-              title: 'Certificates',
-              icon: Icons.verified,
-            ),
           ),
-          const Divider(),
+          _item(
+            context,
+            Icons.face,
+            'Face / Eye Verification',
+          ),
+          _item(
+            context,
+            Icons.notifications,
+            'Notifications',
+          ),
           _item(
             context,
             Icons.settings,
-            'Settings',
-            const FeaturePage(
-              title: 'Settings',
-              icon: Icons.settings,
-            ),
+            'Admin Settings',
           ),
-          _item(
-            context,
-            Icons.info_outline,
-            'About Center',
-            const FeaturePage(
-              title: 'About Center',
-              icon: Icons.info_outline,
+          const Divider(),
+          ListTile(
+            leading: const Icon(
+              Icons.logout,
+              color: Colors.red,
             ),
+            title: const Text(
+              'Logout',
+              style: TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            onTap: () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const LoginPage(),
+                ),
+                (route) => false,
+              );
+            },
           ),
         ],
       ),
@@ -560,21 +810,186 @@ class AppDrawer extends StatelessWidget {
     BuildContext context,
     IconData icon,
     String title,
-    Widget page,
   ) {
     return ListTile(
-      leading: Icon(icon, color: Colors.orange.shade800),
+      leading: Icon(icon),
       title: Text(title),
-      onTap: () {
-        Navigator.pop(context);
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => page),
-        );
-      },
+      trailing: const Icon(
+        Icons.arrow_forward_ios,
+        size: 14,
+      ),
+      onTap: () => open(context, title, icon),
     );
   }
 }
+
+// ================= PAYMENT PAGE =================
+
+class PaymentPage extends StatefulWidget {
+  const PaymentPage({super.key});
+
+  @override
+  State<PaymentPage> createState() => _PaymentPageState();
+}
+
+class _PaymentPageState extends State<PaymentPage> {
+  final amountController = TextEditingController();
+  final upiId = '9691696981-4@ybl';
+
+  void showPaymentMessage(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Fees & Payment'),
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          children: [
+            Card(
+              elevation: 3,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    const Icon(
+                      Icons.qr_code_2,
+                      size: 70,
+                      color: Colors.orange,
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'UPI QR Payment',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'UPI ID',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                    Text(
+                      upiId,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Simple visual QR placeholder.
+                    // Real scannable QR should be generated with a QR
+                    // package after adding it to pubspec.yaml.
+                    Container(
+                      width: 210,
+                      height: 210,
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          width: 3,
+                          color: Colors.black,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.qr_code_2,
+                          size: 180,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+                    TextField(
+                      controller: amountController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Amount',
+                        prefixText: '₹ ',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          if (amountController.text.trim().isEmpty) {
+                            showPaymentMessage(
+                              'Amount Required',
+                              'Please enter payment amount.',
+                            );
+                            return;
+                          }
+
+                          showPaymentMessage(
+                            'UPI Payment',
+                            'Open your UPI app and pay to:\n\n$upiId\n\nAmount: ₹${amountController.text}',
+                          );
+                        },
+                        icon: const Icon(Icons.payment),
+                        label: const Text('PAY USING UPI'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            Card(
+              child: ListTile(
+                leading: const CircleAvatar(
+                  child: Icon(Icons.credit_card),
+                ),
+                title: const Text(
+                  'Online Payment Gateway',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: const Text(
+                  'Gateway integration ready',
+                ),
+                trailing: const Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                ),
+                onTap: () {
+                  showPaymentMessage(
+                    'Payment Gateway',
+                    'Gateway screen is ready.\n\nFor live payments, merchant credentials and secure server-side payment verification are required.',
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ================= FEATURE PAGE =================
 
 class FeaturePage extends StatelessWidget {
   final String title;
@@ -595,45 +1010,82 @@ class FeaturePage extends StatelessWidget {
         foregroundColor: Colors.white,
       ),
       body: Center(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircleAvatar(
-                radius: 45,
-                backgroundColor: Colors.orange.shade50,
-                child: Icon(
-                  icon,
-                  size: 50,
-                  color: Colors.orange.shade800,
-                ),
+          child: Card(
+            elevation: 3,
+            child: Padding(
+              padding: const EdgeInsets.all(25),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircleAvatar(
+                    radius: 45,
+                    backgroundColor: Colors.orange.shade50,
+                    child: Icon(
+                      icon,
+                      size: 50,
+                      color: Colors.orange.shade800,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    _description(title),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 15),
+                  ),
+                  const SizedBox(height: 25),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('$title module opened successfully'),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.add),
+                    label: Text('Add / Manage $title'),
+                  ),
+                ],
               ),
-              const SizedBox(height: 20),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'This module is ready for the next development step.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 15),
-              ),
-              const SizedBox(height: 25),
-              ElevatedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.add),
-                label: Text('Add $title'),
-              ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
+
+  String _description(String name) {
+    switch (name) {
+      case 'Students':
+        return 'Add, search and manage student records.';
+      case 'Attendance':
+        return 'Manage daily student attendance.';
+      case 'Fees':
+        return 'Manage student fees and payment status.';
+      case 'Location':
+        return 'Location/GPS module. Device location permission can be added here.';
+      case 'Certificates':
+        return 'Manage and generate student certificates.';
+      case 'Face / Eye Verification':
+        return 'Face and eye verification module.';
+      case 'Notifications':
+        return 'View important center notifications.';
+      case 'Admin Settings':
+        return 'Manage administrator and application settings.';
+      default:
+        return 'Course and training information.';
+    }
+  }
 }
+
+
