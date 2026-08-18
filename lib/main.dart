@@ -157,9 +157,9 @@ class DashboardPage extends StatelessWidget {
 
             _courseCard(
               context,
-              Icons.computer,
-              'Basic Computer',
-              'Computer fundamentals',
+            Icons.computer,
+            'Basic Computer',
+            'Computer fundamentals',
             ),
             _courseCard(
               context,
@@ -264,15 +264,18 @@ class DashboardPage extends StatelessWidget {
       ),
       child: const Row(
         children: [
-          CircleAvatar(
-            radius: 35,
-            backgroundColor: Colors.white,
-            child: Icon(
-              Icons.computer,
-              size: 38,
-              color: orange,
-            ),
-          ),
+          ClipOval(
+  child: Container(
+    width: 70,
+    height: 70,
+    color: Colors.white,
+    padding: const EdgeInsets.all(5),
+    child: Image.asset(
+      'assets/icon/jay_shree_ram_logo.png',
+      fit: BoxFit.contain,
+    ),
+  ),
+),
           SizedBox(width: 16),
           Expanded(
             child: Column(
