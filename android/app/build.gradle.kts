@@ -11,7 +11,6 @@ android {
 
 =======
      
-    ndkVersion = "27.2.12479018"
 >>>>>>> 2dc2d54 (Set NDK 27.2.12479018)
 
     compileOptions {
