@@ -85,7 +85,7 @@ class _LoginPageState extends State<LoginPage> {
                         width: 100,
                         height: 100,
                         fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => const CircleAvatar(
+                        errorBuilder: (_, _, __) => const CircleAvatar(
                           radius: 50,
                           child: Icon(Icons.computer, size: 50),
                         ),
@@ -483,7 +483,7 @@ class DashboardPage extends StatelessWidget {
               child: Image.asset(
                 'assets/icon/jay_shree_ram_logo.png',
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const Icon(
+                errorBuilder: (_, _, __) => const Icon(
                   Icons.computer,
                   size: 40,
                   color: orange,
@@ -694,7 +694,7 @@ class AppDrawer extends StatelessWidget {
                     child: Image.asset(
                       'assets/icon/jay_shree_ram_logo.png',
                       fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => const Icon(
+                      errorBuilder: (_, _, __) => const Icon(
                         Icons.computer,
                         color: Colors.orange,
                         size: 38,
