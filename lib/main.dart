@@ -332,11 +332,17 @@ class _DashboardPageState extends State<DashboardPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => FeaturePage(
-          title: item.title,
-          subtitle: item.subtitle,
-          icon: item.icon,
-        ),
+        builder: (_) {
+          if (item.title == 'Students') {
+            return const StudentProfilePage();
+          }
+
+          return FeaturePage(
+            title: item.title,
+            subtitle: item.subtitle,
+            icon: item.icon,
+          );
+        },
       ),
     );
   }
@@ -1056,6 +1062,342 @@ class FeaturePage extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+
+class StudentProfilePage extends StatefulWidget {
+  const StudentProfilePage({super.key});
+
+  @override
+  State<StudentProfilePage> createState() => _StudentProfilePageState();
+}
+
+class _StudentProfilePageState extends State<StudentProfilePage> {
+  final formKey = GlobalKey<FormState>();
+
+  final studentName = TextEditingController();
+  final fatherName = TextEditingController();
+  final motherName = TextEditingController();
+  final mobile = TextEditingController();
+  final email = TextEditingController();
+  final dob = TextEditingController();
+  final address = TextEditingController();
+  final city = TextEditingController();
+  final state = TextEditingController();
+  final pincode = TextEditingController();
+  final course = TextEditingController();
+  final admissionNo = TextEditingController();
+  final rollNo = TextEditingController();
+
+  String gender = 'Male';
+
+  @override
+  void dispose() {
+    studentName.dispose();
+    fatherName.dispose();
+    motherName.dispose();
+    mobile.dispose();
+    email.dispose();
+    dob.dispose();
+    address.dispose();
+    city.dispose();
+    state.dispose();
+    pincode.dispose();
+    course.dispose();
+    admissionNo.dispose();
+    rollNo.dispose();
+    super.dispose();
+  }
+
+  InputDecoration decoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+      ),
+    );
+  }
+
+  Widget field(
+    String label,
+    TextEditingController controller,
+    IconData icon, {
+    TextInputType? keyboardType,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        decoration: decoration(label, icon),
+        validator: (value) {
+          if (value == null || value.trim().isEmpty) {
+            return '$label is required';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  void saveStudent() {
+    if (formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Student profile saved successfully'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  void clearForm() {
+    studentName.clear();
+    fatherName.clear();
+    motherName.clear();
+    mobile.clear();
+    email.clear();
+    dob.clear();
+    address.clear();
+    city.clear();
+    state.clear();
+    pincode.clear();
+    course.clear();
+    admissionNo.clear();
+    rollNo.clear();
+
+    setState(() {
+      gender = 'Male';
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Student Profile'),
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
+      ),
+      body: Form(
+        key: formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Container(
+              padding: const EdgeInsets.all(22),
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [
+                    Colors.orange,
+                    Color(0xFFFF8F00),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: const Column(
+                children: [
+                  CircleAvatar(
+                    radius: 42,
+                    backgroundColor: Colors.white,
+                    child: Icon(
+                      Icons.person,
+                      size: 48,
+                      color: Colors.orange,
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    'Complete Student Profile',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    'Jay Shree Ram Computer Center',
+                    style: TextStyle(
+                      color: Colors.white70,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const Text(
+              'Personal Details',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            field(
+              'Student Name',
+              studentName,
+              Icons.person,
+            ),
+
+            field(
+              'Father Name',
+              fatherName,
+              Icons.man,
+            ),
+
+            field(
+              'Mother Name',
+              motherName,
+              Icons.woman,
+            ),
+
+            field(
+              'Mobile Number',
+              mobile,
+              Icons.phone,
+              keyboardType: TextInputType.phone,
+            ),
+
+            field(
+              'Email',
+              email,
+              Icons.email,
+              keyboardType: TextInputType.emailAddress,
+            ),
+
+            field(
+              'Date of Birth',
+              dob,
+              Icons.calendar_month,
+            ),
+
+            DropdownButtonFormField<String>(
+              initialValue: gender,
+              decoration: decoration(
+                'Gender',
+                Icons.wc,
+              ),
+              items: const [
+                DropdownMenuItem(
+                  value: 'Male',
+                  child: Text('Male'),
+                ),
+                DropdownMenuItem(
+                  value: 'Female',
+                  child: Text('Female'),
+                ),
+                DropdownMenuItem(
+                  value: 'Other',
+                  child: Text('Other'),
+                ),
+              ],
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    gender = value;
+                  });
+                }
+              },
+            ),
+
+            const SizedBox(height: 22),
+
+            const Text(
+              'Address Details',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            field(
+              'Address',
+              address,
+              Icons.home,
+            ),
+
+            field(
+              'City',
+              city,
+              Icons.location_city,
+            ),
+
+            field(
+              'State',
+              state,
+              Icons.map,
+            ),
+
+            field(
+              'PIN Code',
+              pincode,
+              Icons.pin_drop,
+              keyboardType: TextInputType.number,
+            ),
+
+            const SizedBox(height: 22),
+
+            const Text(
+              'Course & Admission',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            field(
+              'Course',
+              course,
+              Icons.menu_book,
+            ),
+
+            field(
+              'Admission Number',
+              admissionNo,
+              Icons.confirmation_number,
+            ),
+
+            field(
+              'Roll Number',
+              rollNo,
+              Icons.badge,
+            ),
+
+            const SizedBox(height: 10),
+
+            SizedBox(
+              height: 54,
+              child: FilledButton.icon(
+                onPressed: saveStudent,
+                icon: const Icon(Icons.save),
+                label: const Text(
+                  'SAVE STUDENT PROFILE',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            OutlinedButton.icon(
+              onPressed: clearForm,
+              icon: const Icon(Icons.clear),
+              label: const Text('Clear Form'),
+            ),
+          ],
+        ),
       ),
     );
   }
