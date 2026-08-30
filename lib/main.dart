@@ -334,7 +334,7 @@ class _DashboardPageState extends State<DashboardPage> {
       MaterialPageRoute(
         builder: (_) {
           if (item.title == 'Students') {
-            return const StudentProfilePage();
+            return const StudentListPage();
           }
 
           return FeaturePage(
