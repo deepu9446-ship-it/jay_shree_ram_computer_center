@@ -344,6 +344,16 @@ class _DashboardPageState extends State<DashboardPage> {
         elevation: 0,
         backgroundColor: Colors.orange,
         foregroundColor: Colors.white,
+        leading: Padding(
+  padding: const EdgeInsets.all(6.0),
+  child: ClipRRect(
+    borderRadius: BorderRadius.circular(10),
+    child: Image.asset(
+      'assets/icon/jay_shree_ram_logo.png',
+      fit: BoxFit.contain,
+    ),
+  ),
+),
         title: const Text(
           'Jay Shree Ram Computer Center',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
