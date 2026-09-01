@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 void main() {
   runApp(const MyApp());
@@ -23,7 +25,6 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
 
 class AdminLoginPage extends StatefulWidget {
   const AdminLoginPage({super.key});
@@ -66,9 +67,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
       if (username == adminUsername && password == adminPassword) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (_) => const DashboardPage(),
-          ),
+          MaterialPageRoute(builder: (_) => const DashboardPage()),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -95,11 +94,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Colors.orange,
-              Color(0xFFFF8F00),
-              Colors.white,
-            ],
+            colors: [Colors.orange, Color(0xFFFF8F00), Colors.white],
             stops: [0.0, 0.45, 0.9],
           ),
         ),
@@ -143,10 +138,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
                         const Text(
                           'Jay Shree Ram Computer Center',
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 14,
-                          ),
+                          style: TextStyle(color: Colors.grey, fontSize: 14),
                         ),
 
                         const SizedBox(height: 28),
@@ -237,10 +229,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
 
                         const Text(
                           'Secure Administration Panel',
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 12,
-                          ),
+                          style: TextStyle(color: Colors.grey, fontSize: 12),
                         ),
                       ],
                     ),
@@ -357,19 +346,14 @@ class _DashboardPageState extends State<DashboardPage> {
         foregroundColor: Colors.white,
         title: const Text(
           'Jay Shree Ram Computer Center',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         actions: [
           IconButton(
             tooltip: 'Notifications',
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('No new notifications'),
-                ),
+                const SnackBar(content: Text('No new notifications')),
               );
             },
             icon: const Icon(Icons.notifications_outlined),
@@ -393,9 +377,7 @@ class _DashboardPageState extends State<DashboardPage> {
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
-            await Future<void>.delayed(
-              const Duration(milliseconds: 500),
-            );
+            await Future<void>.delayed(const Duration(milliseconds: 500));
             if (mounted) {
               setState(() {});
             }
@@ -409,10 +391,7 @@ class _DashboardPageState extends State<DashboardPage> {
               const SizedBox(height: 22),
               const Text(
                 'Quick Access',
-                style: TextStyle(
-                  fontSize: 21,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               _featureGrid(),
@@ -492,10 +471,7 @@ class _DashboardPageState extends State<DashboardPage> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         gradient: const LinearGradient(
-          colors: [
-            Colors.orange,
-            Color(0xFFFF8F00),
-          ],
+          colors: [Colors.orange, Color(0xFFFF8F00)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -516,11 +492,7 @@ class _DashboardPageState extends State<DashboardPage> {
               color: Colors.white.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.computer,
-              color: Colors.white,
-              size: 34,
-            ),
+            child: const Icon(Icons.computer, color: Colors.white, size: 34),
           ),
           const SizedBox(width: 16),
           const Expanded(
@@ -538,18 +510,12 @@ class _DashboardPageState extends State<DashboardPage> {
                 SizedBox(height: 6),
                 Text(
                   'Jay Shree Ram Computer Center',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Colors.white, fontSize: 14),
                 ),
                 SizedBox(height: 3),
                 Text(
                   'Manage your center from one place',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
                 ),
               ],
             ),
@@ -568,45 +534,23 @@ class _DashboardPageState extends State<DashboardPage> {
       mainAxisSpacing: 12,
       childAspectRatio: 1.7,
       children: [
-        _statCard(
-          'Total Students',
-          '248',
-          Icons.people,
-          Colors.blue,
-        ),
-        _statCard(
-          'Present Today',
-          '186',
-          Icons.how_to_reg,
-          Colors.green,
-        ),
+        _statCard('Total Students', '248', Icons.people, Colors.blue),
+        _statCard('Present Today', '186', Icons.how_to_reg, Colors.green),
         _statCard(
           'Pending Fees',
           '₹24,500',
           Icons.account_balance_wallet,
           Colors.red,
         ),
-        _statCard(
-          'Courses',
-          '12',
-          Icons.menu_book,
-          Colors.purple,
-        ),
+        _statCard('Courses', '12', Icons.menu_book, Colors.purple),
       ],
     );
   }
 
-  Widget _statCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
+  Widget _statCard(String title, String value, IconData icon, Color color) {
     return Card(
       elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Row(
@@ -638,10 +582,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey.shade700,
-                    ),
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
                   ),
                 ],
               ),
@@ -694,11 +635,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Icon(
-                    item.icon,
-                    color: Colors.orange.shade800,
-                    size: 23,
-                  ),
+                  Icon(item.icon, color: Colors.orange.shade800, size: 23),
                   const SizedBox(height: 5),
                   Text(
                     item.title,
@@ -722,9 +659,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _recentActivity() {
     return Card(
       elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -732,17 +667,11 @@ class _DashboardPageState extends State<DashboardPage> {
           children: [
             const Row(
               children: [
-                Icon(
-                  Icons.history,
-                  color: Colors.orange,
-                ),
+                Icon(Icons.history, color: Colors.orange),
                 SizedBox(width: 8),
                 Text(
                   'Recent Activity',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
@@ -757,37 +686,21 @@ class _DashboardPageState extends State<DashboardPage> {
               'Fee payment received',
               'Today, 11:15 AM',
             ),
-            _activity(
-              Icons.fact_check,
-              'Attendance marked',
-              'Today, 12:05 PM',
-            ),
+            _activity(Icons.fact_check, 'Attendance marked', 'Today, 12:05 PM'),
           ],
         ),
       ),
     );
   }
 
-  Widget _activity(
-    IconData icon,
-    String title,
-    String time,
-  ) {
+  Widget _activity(IconData icon, String title, String time) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: CircleAvatar(
         backgroundColor: Colors.orange.withValues(alpha: 0.12),
-        child: Icon(
-          icon,
-          color: Colors.orange,
-        ),
+        child: Icon(icon, color: Colors.orange),
       ),
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
       subtitle: Text(time),
     );
   }
@@ -800,10 +713,7 @@ class _DashboardPageState extends State<DashboardPage> {
             margin: EdgeInsets.zero,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  Colors.orange,
-                  Color(0xFFFF8F00),
-                ],
+                colors: [Colors.orange, Color(0xFFFF8F00)],
               ),
             ),
             child: const Center(
@@ -813,11 +723,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   CircleAvatar(
                     radius: 34,
                     backgroundColor: Colors.white,
-                    child: Icon(
-                      Icons.computer,
-                      color: Colors.orange,
-                      size: 38,
-                    ),
+                    child: Icon(Icons.computer, color: Colors.orange, size: 38),
                   ),
                   SizedBox(height: 10),
                   Text(
@@ -830,9 +736,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   Text(
                     'Computer Center',
-                    style: TextStyle(
-                      color: Colors.white70,
-                    ),
+                    style: TextStyle(color: Colors.white70),
                   ),
                 ],
               ),
@@ -904,10 +808,7 @@ class _DashboardPageState extends State<DashboardPage> {
             child: Text(
               'Jay Shree Ram Computer Center\nAdmin Dashboard',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 12,
-              ),
+              style: TextStyle(color: Colors.grey, fontSize: 12),
             ),
           ),
         ],
@@ -955,10 +856,7 @@ class FeaturePage extends StatelessWidget {
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [
-                  Colors.orange,
-                  Color(0xFFFF8F00),
-                ],
+                colors: [Colors.orange, Color(0xFFFF8F00)],
               ),
               borderRadius: BorderRadius.circular(24),
             ),
@@ -967,11 +865,7 @@ class FeaturePage extends StatelessWidget {
                 CircleAvatar(
                   radius: 42,
                   backgroundColor: Colors.white,
-                  child: Icon(
-                    icon,
-                    size: 44,
-                    color: Colors.orange,
-                  ),
+                  child: Icon(icon, size: 44, color: Colors.orange),
                 ),
                 const SizedBox(height: 15),
                 Text(
@@ -983,12 +877,7 @@ class FeaturePage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 5),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                  ),
-                ),
+                Text(subtitle, style: const TextStyle(color: Colors.white70)),
               ],
             ),
           ),
@@ -999,24 +888,9 @@ class FeaturePage extends StatelessWidget {
             'Create a new record',
             Icons.add_circle,
           ),
-          _actionCard(
-            context,
-            'View List',
-            'View all records',
-            Icons.list_alt,
-          ),
-          _actionCard(
-            context,
-            'Search',
-            'Search records',
-            Icons.search,
-          ),
-          _actionCard(
-            context,
-            'Reports',
-            'Generate reports',
-            Icons.analytics,
-          ),
+          _actionCard(context, 'View List', 'View all records', Icons.list_alt),
+          _actionCard(context, 'Search', 'Search records', Icons.search),
+          _actionCard(context, 'Reports', 'Generate reports', Icons.analytics),
         ],
       ),
     );
@@ -1031,27 +905,14 @@ class FeaturePage extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 18,
-          vertical: 6,
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
         leading: CircleAvatar(
           backgroundColor: Colors.orange.withValues(alpha: 0.12),
-          child: Icon(
-            actionIcon,
-            color: Colors.orange,
-          ),
+          child: Icon(actionIcon, color: Colors.orange),
         ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(subtitle),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () {
@@ -1066,8 +927,6 @@ class FeaturePage extends StatelessWidget {
     );
   }
 }
-
-
 
 class Student {
   String studentName;
@@ -1084,6 +943,7 @@ class Student {
   String course;
   String admissionNo;
   String rollNo;
+  String? photoPath;
 
   Student({
     required this.studentName,
@@ -1100,6 +960,7 @@ class Student {
     required this.course,
     required this.admissionNo,
     required this.rollNo,
+    this.photoPath,
   });
 }
 
@@ -1109,11 +970,7 @@ class StudentProfilePage extends StatefulWidget {
   final Student? student;
   final int? index;
 
-  const StudentProfilePage({
-    super.key,
-    this.student,
-    this.index,
-  });
+  const StudentProfilePage({super.key, this.student, this.index});
 
   @override
   State<StudentProfilePage> createState() => _StudentProfilePageState();
@@ -1138,6 +995,9 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
 
   String gender = 'Male';
 
+  File? selectedPhoto;
+  final ImagePicker _picker = ImagePicker();
+
   @override
   void initState() {
     super.initState();
@@ -1159,6 +1019,10 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
       admissionNo.text = s.admissionNo;
       rollNo.text = s.rollNo;
       gender = s.gender;
+
+      if (s.photoPath != null && s.photoPath!.isNotEmpty) {
+        selectedPhoto = File(s.photoPath!);
+      }
     }
   }
 
@@ -1184,9 +1048,7 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
     return InputDecoration(
       labelText: label,
       prefixIcon: Icon(icon),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
     );
   }
 
@@ -1215,8 +1077,23 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
     );
   }
 
+  Future<void> pickStudentPhoto() async {
+    final XFile? picked = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+
+    if (picked != null && mounted) {
+      setState(() {
+        selectedPhoto = File(picked.path);
+      });
+    }
+  }
+
   void saveStudent() {
-    if (!formKey.currentState!.validate()) return;
+    if (!formKey.currentState!.validate()) {
+      return;
+    }
 
     final newStudent = Student(
       studentName: studentName.text.trim(),
@@ -1233,15 +1110,14 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
       course: course.text.trim(),
       admissionNo: admissionNo.text.trim(),
       rollNo: rollNo.text.trim(),
+      photoPath: selectedPhoto?.path,
     );
 
-    setState(() {
-      if (widget.index != null) {
-        students[widget.index!] = newStudent;
-      } else {
-        students.add(newStudent);
-      }
-    });
+    if (widget.index != null) {
+      students[widget.index!] = newStudent;
+    } else {
+      students.add(newStudent);
+    }
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -1255,6 +1131,54 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
     );
 
     Navigator.pop(context);
+  }
+
+  void deleteStudent() {
+    final index = widget.index;
+
+    if (index == null) {
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Delete Student'),
+          content: const Text(
+            'Kya aap is student ko delete karna chahte hain?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+              },
+              child: const Text('CANCEL'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () {
+                students.removeAt(index);
+
+                Navigator.pop(dialogContext);
+                Navigator.pop(context);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Student deleted successfully'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+              child: const Text('DELETE'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void clearForm() {
@@ -1274,6 +1198,7 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
 
     setState(() {
       gender = 'Male';
+      selectedPhoto = null;
     });
   }
 
@@ -1297,26 +1222,42 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
               margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [
-                    Colors.orange,
-                    Color(0xFFFF8F00),
-                  ],
+                  colors: [Colors.orange, Color(0xFFFF8F00)],
                 ),
                 borderRadius: BorderRadius.circular(22),
               ),
-              child: const Column(
+              child: Column(
                 children: [
-                  CircleAvatar(
-                    radius: 42,
-                    backgroundColor: Colors.white,
-                    child: Icon(
-                      Icons.person,
-                      size: 48,
-                      color: Colors.orange,
+                  GestureDetector(
+                    onTap: pickStudentPhoto,
+                    child: CircleAvatar(
+                      radius: 48,
+                      backgroundColor: Colors.white,
+                      backgroundImage: selectedPhoto != null
+                          ? FileImage(selectedPhoto!)
+                          : null,
+                      child: selectedPhoto == null
+                          ? const Icon(
+                              Icons.person,
+                              size: 52,
+                              color: Colors.orange,
+                            )
+                          : null,
                     ),
                   ),
-                  SizedBox(height: 10),
-                  Text(
+                  const SizedBox(height: 10),
+                  TextButton.icon(
+                    onPressed: pickStudentPhoto,
+                    icon: const Icon(Icons.photo_camera, color: Colors.white),
+                    label: const Text(
+                      'SELECT PHOTO',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const Text(
                     'Student Profile',
                     style: TextStyle(
                       color: Colors.white,
@@ -1324,12 +1265,10 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: 5),
-                  Text(
+                  const SizedBox(height: 5),
+                  const Text(
                     'Jay Shree Ram Computer Center',
-                    style: TextStyle(
-                      color: Colors.white70,
-                    ),
+                    style: TextStyle(color: Colors.white70),
                   ),
                 ],
               ),
@@ -1337,31 +1276,16 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
 
             const Text(
               'Personal Details',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 14),
 
-            field(
-              'Student Name',
-              studentName,
-              Icons.person,
-            ),
+            field('Student Name', studentName, Icons.person),
 
-            field(
-              'Father Name',
-              fatherName,
-              Icons.man,
-            ),
+            field('Father Name', fatherName, Icons.man),
 
-            field(
-              'Mother Name',
-              motherName,
-              Icons.woman,
-            ),
+            field('Mother Name', motherName, Icons.woman),
 
             field(
               'Mobile Number',
@@ -1378,31 +1302,15 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
               requiredField: false,
             ),
 
-            field(
-              'Date of Birth',
-              dob,
-              Icons.calendar_month,
-            ),
+            field('Date of Birth', dob, Icons.calendar_month),
 
             DropdownButtonFormField<String>(
               initialValue: gender,
-              decoration: decoration(
-                'Gender',
-                Icons.wc,
-              ),
+              decoration: decoration('Gender', Icons.wc),
               items: const [
-                DropdownMenuItem(
-                  value: 'Male',
-                  child: Text('Male'),
-                ),
-                DropdownMenuItem(
-                  value: 'Female',
-                  child: Text('Female'),
-                ),
-                DropdownMenuItem(
-                  value: 'Other',
-                  child: Text('Other'),
-                ),
+                DropdownMenuItem(value: 'Male', child: Text('Male')),
+                DropdownMenuItem(value: 'Female', child: Text('Female')),
+                DropdownMenuItem(value: 'Other', child: Text('Other')),
               ],
               onChanged: (value) {
                 if (value != null) {
@@ -1417,31 +1325,16 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
 
             const Text(
               'Address Details',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 14),
 
-            field(
-              'Address',
-              address,
-              Icons.home,
-            ),
+            field('Address', address, Icons.home),
 
-            field(
-              'City',
-              city,
-              Icons.location_city,
-            ),
+            field('City', city, Icons.location_city),
 
-            field(
-              'State',
-              state,
-              Icons.map,
-            ),
+            field('State', state, Icons.map),
 
             field(
               'PIN Code',
@@ -1454,43 +1347,27 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
 
             const Text(
               'Course & Admission',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 14),
 
-            field(
-              'Course',
-              course,
-              Icons.menu_book,
-            ),
+            field('Course', course, Icons.menu_book),
 
-            field(
-              'Admission Number',
-              admissionNo,
-              Icons.confirmation_number,
-            ),
+            field('Admission Number', admissionNo, Icons.confirmation_number),
 
-            field(
-              'Roll Number',
-              rollNo,
-              Icons.badge,
-            ),
+            field('Roll Number', rollNo, Icons.badge),
 
             const SizedBox(height: 10),
 
             SizedBox(
               height: 54,
+              width: double.infinity,
               child: FilledButton.icon(
                 onPressed: saveStudent,
-                icon: const Icon(Icons.save),
+                icon: Icon(editing ? Icons.update : Icons.save),
                 label: Text(
-                  editing
-                      ? 'UPDATE STUDENT'
-                      : 'SAVE STUDENT',
+                  editing ? 'UPDATE STUDENT' : 'SAVE STUDENT',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -1498,6 +1375,49 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
                 ),
               ),
             ),
+
+            if (editing) ...[
+              const SizedBox(height: 12),
+
+              SizedBox(
+                height: 54,
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('You can edit the student details above'),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.edit),
+                  label: const Text(
+                    'EDIT DETAILS',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              SizedBox(
+                height: 54,
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: deleteStudent,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
+                  icon: const Icon(Icons.delete),
+                  label: const Text(
+                    'DELETE STUDENT',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
 
             const SizedBox(height: 12),
 
@@ -1541,9 +1461,7 @@ class _StudentListPageState extends State<StudentListPage> {
   void addStudent() async {
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const StudentProfilePage(),
-      ),
+      MaterialPageRoute(builder: (_) => const StudentProfilePage()),
     );
 
     setState(() {});
@@ -1553,10 +1471,8 @@ class _StudentListPageState extends State<StudentListPage> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => StudentProfilePage(
-          student: students[index],
-          index: index,
-        ),
+        builder: (_) =>
+            StudentProfilePage(student: students[index], index: index),
       ),
     );
 
@@ -1571,9 +1487,7 @@ class _StudentListPageState extends State<StudentListPage> {
       builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Delete Student?'),
-          content: Text(
-            'Delete ${student.studentName} from student list?',
-          ),
+          content: Text('Delete ${student.studentName} from student list?'),
           actions: [
             TextButton(
               onPressed: () {
@@ -1590,9 +1504,7 @@ class _StudentListPageState extends State<StudentListPage> {
                 Navigator.pop(dialogContext);
 
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Student deleted'),
-                  ),
+                  const SnackBar(content: Text('Student deleted')),
                 );
               },
               child: const Text('DELETE'),
@@ -1610,21 +1522,13 @@ class _StudentListPageState extends State<StudentListPage> {
       showDragHandle: true,
       builder: (_) {
         return Padding(
-          padding: const EdgeInsets.fromLTRB(
-            20,
-            10,
-            20,
-            30,
-          ),
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
           child: ListView(
             shrinkWrap: true,
             children: [
               const CircleAvatar(
                 radius: 40,
-                child: Icon(
-                  Icons.person,
-                  size: 45,
-                ),
+                child: Icon(Icons.person, size: 45),
               ),
 
               const SizedBox(height: 12),
@@ -1664,19 +1568,9 @@ class _StudentListPageState extends State<StudentListPage> {
   Widget _detail(String title, String value) {
     return Card(
       child: ListTile(
-        leading: const Icon(
-          Icons.info_outline,
-          color: Colors.orange,
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        subtitle: Text(
-          value.isEmpty ? '-' : value,
-        ),
+        leading: const Icon(Icons.info_outline, color: Colors.orange),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(value.isEmpty ? '-' : value),
       ),
     );
   }
@@ -1711,8 +1605,7 @@ class _StudentListPageState extends State<StudentListPage> {
                 });
               },
               decoration: InputDecoration(
-                hintText:
-                    'Search name, mobile, admission no...',
+                hintText: 'Search name, mobile, admission no...',
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: search.isNotEmpty
                     ? IconButton(
@@ -1732,15 +1625,10 @@ class _StudentListPageState extends State<StudentListPage> {
           ),
 
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                const Icon(
-                  Icons.people,
-                  color: Colors.orange,
-                ),
+                const Icon(Icons.people, color: Colors.orange),
                 const SizedBox(width: 8),
                 Text(
                   '${students.length} Students',
@@ -1759,8 +1647,7 @@ class _StudentListPageState extends State<StudentListPage> {
             child: list.isEmpty
                 ? Center(
                     child: Column(
-                      mainAxisAlignment:
-                          MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
                           Icons.people_outline,
@@ -1778,45 +1665,30 @@ class _StudentListPageState extends State<StudentListPage> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Tap Add Student to create a profile',
-                        ),
+                        const Text('Tap Add Student to create a profile'),
                       ],
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(
-                      16,
-                      0,
-                      16,
-                      100,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
                     itemCount: list.length,
                     itemBuilder: (context, position) {
                       final student = list[position];
 
-                      final realIndex =
-                          students.indexOf(student);
+                      final realIndex = students.indexOf(student);
 
                       return Card(
-                        margin:
-                            const EdgeInsets.only(bottom: 12),
+                        margin: const EdgeInsets.only(bottom: 12),
                         shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(18),
+                          borderRadius: BorderRadius.circular(18),
                         ),
                         child: ListTile(
-                          contentPadding:
-                              const EdgeInsets.all(12),
+                          contentPadding: const EdgeInsets.all(12),
 
                           leading: const CircleAvatar(
                             radius: 28,
-                            backgroundColor:
-                                Color(0xFFFFE0B2),
-                            child: Icon(
-                              Icons.person,
-                              color: Colors.orange,
-                            ),
+                            backgroundColor: Color(0xFFFFE0B2),
+                            child: Icon(Icons.person, color: Colors.orange),
                           ),
 
                           title: Text(
@@ -1828,19 +1700,12 @@ class _StudentListPageState extends State<StudentListPage> {
                           ),
 
                           subtitle: Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const SizedBox(height: 5),
-                              Text(
-                                student.course,
-                              ),
-                              Text(
-                                'Admission: ${student.admissionNo}',
-                              ),
-                              Text(
-                                'Mobile: ${student.mobile}',
-                              ),
+                              Text(student.course),
+                              Text('Admission: ${student.admissionNo}'),
+                              Text('Mobile: ${student.mobile}'),
                             ],
                           ),
 
@@ -1864,24 +1729,21 @@ class _StudentListPageState extends State<StudentListPage> {
                               PopupMenuItem(
                                 value: 'view',
                                 child: ListTile(
-                                  leading:
-                                      Icon(Icons.visibility),
+                                  leading: Icon(Icons.visibility),
                                   title: Text('View Profile'),
                                 ),
                               ),
                               PopupMenuItem(
                                 value: 'edit',
                                 child: ListTile(
-                                  leading:
-                                      Icon(Icons.edit),
+                                  leading: Icon(Icons.edit),
                                   title: Text('Edit'),
                                 ),
                               ),
                               PopupMenuItem(
                                 value: 'delete',
                                 child: ListTile(
-                                  leading:
-                                      Icon(Icons.delete),
+                                  leading: Icon(Icons.delete),
                                   title: Text('Delete'),
                                 ),
                               ),
