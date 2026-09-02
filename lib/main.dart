@@ -143,7 +143,8 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
 
                         const SizedBox(height: 28),
 
-                        TextFormField(
+                        
+                         TextFormField(
                           controller: _usernameController,
                           textInputAction: TextInputAction.next,
                           decoration: InputDecoration(
@@ -321,12 +322,16 @@ class _DashboardPageState extends State<DashboardPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) {
-          if (item.title == 'Students') {
-            return const StudentListPage();
-          }
+      builder: (_) {
+  if (item.title == 'Students') {
+    return const StudentListPage();
+  }
 
-          return FeaturePage(
+  if (item.title == 'Admission') {
+    return const StudentProfilePage();
+  }
+
+  return FeaturePage(
             title: item.title,
             subtitle: item.subtitle,
             icon: item.icon,
@@ -949,6 +954,7 @@ class Student {
   String address;
   String city;
   String state;
+  String? signaturePath;
   String pincode;
   String course;
   String admissionNo;
@@ -966,6 +972,7 @@ class Student {
     required this.address,
     required this.city,
     required this.state,
+    this.signaturePath,
     required this.pincode,
     required this.course,
     required this.admissionNo,
@@ -999,14 +1006,29 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
   final city = TextEditingController();
   final state = TextEditingController();
   final pincode = TextEditingController();
+  String? signaturePath;
   final course = TextEditingController();
   final admissionNo = TextEditingController();
   final rollNo = TextEditingController();
-
   String gender = 'Male';
 
-  File? selectedPhoto;
-  final ImagePicker _picker = ImagePicker();
+File? selectedPhoto;
+File? selectedSignature;
+
+final ImagePicker _picker = ImagePicker();
+
+Future<void> pickSignature() async {
+  final XFile? image = await _picker.pickImage(
+    source: ImageSource.gallery,
+  );
+
+  if (image != null && mounted) {
+    setState(() {
+      selectedSignature = File(image.path);
+      signaturePath = image.path;
+    });
+  }
+}
 
   @override
   void initState() {
@@ -1029,6 +1051,7 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
       admissionNo.text = s.admissionNo;
       rollNo.text = s.rollNo;
       gender = s.gender;
+      signaturePath = s.signaturePath;
 
       if (s.photoPath != null && s.photoPath!.isNotEmpty) {
         selectedPhoto = File(s.photoPath!);
@@ -1121,6 +1144,7 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
       admissionNo: admissionNo.text.trim(),
       rollNo: rollNo.text.trim(),
       photoPath: selectedPhoto?.path,
+      signaturePath: signaturePath,
     );
 
     if (widget.index != null) {
@@ -1447,10 +1471,12 @@ class StudentListPage extends StatefulWidget {
   const StudentListPage({super.key});
 
   @override
-  State<StudentListPage> createState() => _StudentListPageState();
+  State<StudentListPage> createState()
+  => _StudentListPageState();
 }
 
-class _StudentListPageState extends State<StudentListPage> {
+class _StudentListPageState extends
+ State<StudentListPage> {
   String search = '';
 
   List<Student> get filteredStudents {
