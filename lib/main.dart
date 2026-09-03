@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'attendance_page.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -329,6 +330,9 @@ class _DashboardPageState extends State<DashboardPage> {
 
   if (item.title == 'Admission') {
     return const StudentProfilePage();
+  }
+    if (item.title == 'Attendance') {
+    return const AttendancePage();
   }
 
   return FeaturePage(
