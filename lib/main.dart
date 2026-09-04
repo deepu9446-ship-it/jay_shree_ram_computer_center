@@ -1555,6 +1555,19 @@ class _StudentListPageState extends
     );
   }
 
+  void startStudentAttendance(Student student) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AttendancePage(
+          studentName: student.studentName,
+          studentId: student.admissionNo,
+          course: student.course,
+        ),
+      ),
+    );
+  }
+
   void viewStudent(Student student) {
     showModalBottomSheet(
       context: context,
@@ -1764,6 +1777,10 @@ class _StudentListPageState extends
                               if (value == 'delete') {
                                 deleteStudent(realIndex);
                               }
+
+                              if (value == 'attendance') {
+                                startStudentAttendance(student);
+                              }
                             },
                             itemBuilder: (_) => const [
                               PopupMenuItem(
@@ -1778,6 +1795,13 @@ class _StudentListPageState extends
                                 child: ListTile(
                                   leading: Icon(Icons.edit),
                                   title: Text('Edit'),
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'attendance',
+                                child: ListTile(
+                                  leading: Icon(Icons.remove_red_eye),
+                                  title: Text('Biometric Attendance'),
                                 ),
                               ),
                               PopupMenuItem(
