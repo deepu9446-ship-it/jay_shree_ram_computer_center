@@ -1,6 +1,4 @@
-
 import 'package:camera/camera.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
@@ -22,7 +20,11 @@ class _AttendancePageState extends State<AttendancePage> {
   bool _blinkDetected = false;
   bool _attendanceMarked = false;
 
-  String _status = 'Camera starting...';
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _studentIdController = TextEditingController();
+  final TextEditingController _courseController = TextEditingController();
+
+  String _status = 'Student details भरें और biometric शुरू करें।';
 
   @override
   void initState() {
@@ -31,238 +33,195 @@ class _AttendancePageState extends State<AttendancePage> {
     _faceDetector = FaceDetector(
       options: FaceDetectorOptions(
         enableClassification: true,
+        enableLandmarks: true,
         enableTracking: true,
         performanceMode: FaceDetectorMode.fast,
+        minFaceSize: 0.15,
       ),
     );
-
-    _startCamera();
   }
 
-  Future<void> _startCamera() async {
+  Future<void> _startBiometric() async {
+    if (_nameController.text.trim().isEmpty ||
+        _studentIdController.text.trim().isEmpty ||
+        _courseController.text.trim().isEmpty) {
+      _showMessage('Name, Student ID और Course भरें।');
+      return;
+    }
+
     try {
       final cameras = await availableCameras();
 
       if (cameras.isEmpty) {
-        setState(() {
-          _status = 'Camera available nahi hai';
-        });
+        _showMessage('Device में camera नहीं मिला।');
         return;
       }
 
-      CameraDescription frontCamera = cameras.first;
+      CameraDescription selectedCamera = cameras.first;
 
       for (final camera in cameras) {
         if (camera.lensDirection == CameraLensDirection.front) {
-          frontCamera = camera;
+          selectedCamera = camera;
           break;
         }
       }
 
-      final controller = CameraController(
-        frontCamera,
+      _cameraController = CameraController(
+        selectedCamera,
         ResolutionPreset.medium,
         enableAudio: false,
-        imageFormatGroup: ImageFormatGroup.nv21,
       );
 
-      await controller.initialize();
-
-      _cameraController = controller;
+      await _cameraController!.initialize();
 
       if (!mounted) return;
 
       setState(() {
         _cameraReady = true;
-        _status = 'Face ke saamne dekhein';
+        _faceDetected = false;
+        _eyesClosed = false;
+        _blinkDetected = false;
+        _attendanceMarked = false;
+        _status = 'Camera चालू है। Camera में देखें और blink करें।';
       });
 
-      await controller.startImageStream(_processCameraImage);
+      _processCamera();
     } catch (e) {
-      if (!mounted) return;
-
-      setState(() {
-        _status = 'Camera error';
-      });
-
-      debugPrint('Camera error: $e');
+      _showMessage('Camera error: $e');
     }
   }
 
-  Future<void> _processCameraImage(CameraImage image) async {
-    if (_processing || _attendanceMarked) return;
+  Future<void> _processCamera() async {
+    if (!_cameraReady ||
+        _cameraController == null ||
+        !_cameraController!.value.isInitialized ||
+        _processing ||
+        _attendanceMarked) {
+      return;
+    }
 
     _processing = true;
 
     try {
-      final inputImage = _convertCameraImage(image);
+      final image = await _cameraController!.takePicture();
 
-      if (inputImage == null) {
-        _processing = false;
-        return;
-      }
+      final inputImage = InputImage.fromFilePath(image.path);
 
       final faces = await _faceDetector.processImage(inputImage);
 
-      if (!mounted) {
-        _processing = false;
-        return;
-      }
+      if (!mounted) return;
 
-      if (faces.isEmpty) {
-        setState(() {
-          _faceDetected = false;
-          _eyesClosed = false;
-          _status = 'Face detect nahi hua';
-        });
-      } else {
+      if (faces.length == 1) {
         final face = faces.first;
 
         final leftEye = face.leftEyeOpenProbability;
         final rightEye = face.rightEyeOpenProbability;
 
-        setState(() {
-          _faceDetected = true;
-        });
-
         if (leftEye != null && rightEye != null) {
-          final bothClosed = leftEye < 0.30 && rightEye < 0.30;
-          final bothOpen = leftEye > 0.70 && rightEye > 0.70;
+          final eyeAverage = (leftEye + rightEye) / 2;
 
-          if (bothClosed) {
-            _eyesClosed = true;
+          final closed = eyeAverage < 0.30;
+          final open = eyeAverage > 0.70;
 
+          if (closed) {
             setState(() {
-              _status = 'Eyes closed — Blink detected...';
+              _faceDetected = true;
+              _eyesClosed = true;
+              _status = 'Eyes closed detected. अब eyes खोलें।';
             });
-          }
-
-          if (bothOpen && _eyesClosed) {
-            _blinkDetected = true;
-            _eyesClosed = false;
-
-            setState(() {
-              _status = 'Face + Eye Blink verified ✓';
-            });
-
-            await Future.delayed(
-              const Duration(milliseconds: 500),
-            );
-
-            await _markAttendance();
+          } else if (open) {
+            if (_eyesClosed) {
+              _markAttendance();
+            } else {
+              setState(() {
+                _faceDetected = true;
+                _eyesClosed = false;
+                _status = 'Face detected. Blink करें।';
+              });
+            }
           }
         } else {
           setState(() {
-            _status = 'Face detected — Blink karein';
+            _faceDetected = true;
+            _status = 'Face detected. Camera में सीधे देखें।';
           });
         }
+      } else if (faces.isEmpty) {
+        setState(() {
+          _faceDetected = false;
+          _eyesClosed = false;
+          _status = 'Face नहीं मिला। Camera में देखें।';
+        });
+      } else {
+        setState(() {
+          _faceDetected = false;
+          _status = 'Camera में केवल एक व्यक्ति होना चाहिए।';
+        });
       }
     } catch (e) {
-      debugPrint('Face detection error: $e');
-    }
-
-    _processing = false;
-  }
-
-  InputImage? _convertCameraImage(CameraImage image) {
-    try {
-      final controller = _cameraController;
-
-      if (controller == null) return null;
-
-      final camera = controller.description;
-
-      final rotation =
-          InputImageRotationValue.fromRawValue(
-        camera.sensorOrientation,
-      );
-
-      if (rotation == null) return null;
-
-      final format =
-          InputImageFormatValue.fromRawValue(
-        image.format.raw,
-      );
-
-      if (format == null) return null;
-
-      final WriteBuffer allBytes = WriteBuffer();
-
-      for (final Plane plane in image.planes) {
-        allBytes.putUint8List(plane.bytes);
+      if (mounted) {
+        setState(() {
+          _status = 'Biometric processing error.';
+        });
       }
+    } finally {
+      _processing = false;
 
-      final Uint8List bytes =
-          allBytes.done().buffer.asUint8List();
-
-      final metadata = InputImageMetadata(
-        size: Size(
-          image.width.toDouble(),
-          image.height.toDouble(),
-        ),
-        rotation: rotation,
-        format: format,
-        bytesPerRow: image.planes.first.bytesPerRow,
-      );
-
-      return InputImage.fromBytes(
-        bytes: bytes,
-        metadata: metadata,
-      );
-    } catch (e) {
-      debugPrint('Image conversion error: $e');
-      return null;
+      if (mounted && _cameraReady && !_attendanceMarked) {
+        await Future.delayed(const Duration(milliseconds: 700));
+        _processCamera();
+      }
     }
   }
 
-  Future<void> _markAttendance() async {
+  void _markAttendance() {
     if (_attendanceMarked) return;
 
-    _attendanceMarked = true;
-
-    try {
-      await _cameraController?.stopImageStream();
-    } catch (_) {}
-
-    if (!mounted) return;
-
     setState(() {
-      _status = 'Attendance Marked Successfully ✓';
+      _blinkDetected = true;
+      _attendanceMarked = true;
+      _status = 'Attendance successfully marked!';
     });
 
-    await showDialog(
+    _showAttendanceDialog();
+  }
+
+  void _showAttendanceDialog() {
+    showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) {
+        final now = DateTime.now();
+
         return AlertDialog(
-          title: const Text('Attendance Successful'),
-          content: const Column(
-            mainAxisSize: MainAxisSize.min,
+          title: const Row(
             children: [
               Icon(
-                Icons.verified,
+                Icons.check_circle,
                 color: Colors.green,
-                size: 70,
               ),
-              SizedBox(height: 15),
-              Text(
-                'Face + Eye Blink Verified',
-                textAlign: TextAlign.center,
+              SizedBox(width: 10),
+              Expanded(
+                child: Text('Attendance Marked'),
               ),
-              SizedBox(height: 8),
-              Text(
-                'Student Present ✓',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Name: ${_nameController.text}'),
+              const SizedBox(height: 8),
+              Text('Student ID: ${_studentIdController.text}'),
+              const SizedBox(height: 8),
+              Text('Course: ${_courseController.text}'),
+              const SizedBox(height: 8),
+              Text('Time: ${_formatTime(now)}'),
             ],
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
+              onPressed: () => Navigator.pop(context),
               child: const Text('OK'),
             ),
           ],
@@ -271,153 +230,247 @@ class _AttendancePageState extends State<AttendancePage> {
     );
   }
 
+  String _formatTime(DateTime time) {
+    final hour = time.hour % 12 == 0 ? 12 : time.hour % 12;
+    final minute = time.minute.toString().padLeft(2, '0');
+    final second = time.second.toString().padLeft(2, '0');
+    final period = time.hour >= 12 ? 'PM' : 'AM';
+
+    return '$hour:$minute:$second $period';
+  }
+
+  void _resetAttendance() {
+    setState(() {
+      _faceDetected = false;
+      _eyesClosed = false;
+      _blinkDetected = false;
+      _attendanceMarked = false;
+      _status = 'Next student के लिए ready।';
+    });
+
+    _processCamera();
+  }
+
+  Future<void> _stopCamera() async {
+    await _cameraController?.dispose();
+    _cameraController = null;
+
+    if (mounted) {
+      setState(() {
+        _cameraReady = false;
+        _faceDetected = false;
+        _eyesClosed = false;
+      });
+    }
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  Widget _field(
+    String label,
+    TextEditingController controller,
+    IconData icon,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _statusCard(
+    String title,
+    String value,
+    IconData icon,
+    bool active,
+  ) {
+    return Card(
+      child: ListTile(
+        leading: Icon(
+          icon,
+          color: active ? Colors.green : Colors.grey,
+        ),
+        title: Text(title),
+        subtitle: Text(value),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _cameraController?.dispose();
     _faceDetector.close();
+
+    _nameController.dispose();
+    _studentIdController.dispose();
+    _courseController.dispose();
+
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final controller = _cameraController;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Biometric Attendance'),
         backgroundColor: Colors.orange,
         foregroundColor: Colors.white,
       ),
-      body: !_cameraReady ||
-              controller == null ||
-              !controller.value.isInitialized
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const CircularProgressIndicator(
-                    color: Colors.orange,
-                  ),
-                  const SizedBox(height: 20),
-                  Text(_status),
-                ],
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Student Details',
+              style: TextStyle(
+                fontSize: 21,
+                fontWeight: FontWeight.bold,
               ),
-            )
-          : Column(
-              children: [
-                Expanded(
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Positioned.fill(
-                        child: CameraPreview(controller),
-                      ),
+            ),
 
-                      Container(
-                        width: 260,
-                        height: 330,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: _faceDetected
-                                ? Colors.green
-                                : Colors.orange,
-                            width: 4,
-                          ),
-                          borderRadius:
-                              BorderRadius.circular(130),
-                        ),
-                      ),
+            const SizedBox(height: 14),
 
-                      Positioned(
-                        bottom: 25,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black87,
-                            borderRadius:
-                                BorderRadius.circular(25),
-                          ),
-                          child: Text(
-                            _status,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+            _field(
+              'Student Name',
+              _nameController,
+              Icons.person,
+            ),
+
+            _field(
+              'Student ID / Roll No.',
+              _studentIdController,
+              Icons.badge,
+            ),
+
+            _field(
+              'Course',
+              _courseController,
+              Icons.menu_book,
+            ),
+
+            const SizedBox(height: 8),
+
+            if (!_cameraReady)
+              ElevatedButton.icon(
+                onPressed: _startBiometric,
+                icon: const Icon(Icons.face),
+                label: const Text(
+                  'START BIOMETRIC ATTENDANCE',
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 15,
                   ),
                 ),
+              ),
 
-                Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: Row(
-                    mainAxisAlignment:
-                        MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _verificationItem(
-                        Icons.face,
-                        'Face',
-                        _faceDetected,
-                      ),
-                      _verificationItem(
-                        Icons.remove_red_eye,
-                        'Blink',
-                        _blinkDetected,
-                      ),
-                      _verificationItem(
-                        Icons.verified,
-                        'Verified',
-                        _attendanceMarked,
-                      ),
-                    ],
-                  ),
+            if (_cameraReady) ...[
+              const SizedBox(height: 16),
+
+              Container(
+                height: 380,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18),
+                  color: Colors.black,
                 ),
+                clipBehavior: Clip.antiAlias,
+                child: CameraPreview(_cameraController!),
+              ),
 
-                const Padding(
-                  padding: EdgeInsets.only(
-                    left: 20,
-                    right: 20,
-                    bottom: 20,
-                  ),
-                  child: Text(
-                    'Camera ke saamne face rakhein aur ek baar naturally blink karein.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 15),
+              const SizedBox(height: 14),
+
+              Text(
+                _status,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              _statusCard(
+                'Face',
+                _faceDetected
+                    ? 'Face detected'
+                    : 'Face not detected',
+                Icons.face,
+                _faceDetected,
+              ),
+
+              _statusCard(
+                'Eyes',
+                _eyesClosed
+                    ? 'Eyes closed'
+                    : 'Waiting for blink',
+                Icons.visibility,
+                _eyesClosed,
+              ),
+
+              _statusCard(
+                'Biometric',
+                _blinkDetected
+                    ? 'Blink detected'
+                    : 'Waiting',
+                Icons.remove_red_eye,
+                _blinkDetected,
+              ),
+
+              _statusCard(
+                'Attendance',
+                _attendanceMarked
+                    ? 'MARKED'
+                    : 'Not marked',
+                Icons.how_to_reg,
+                _attendanceMarked,
+              ),
+
+              if (_attendanceMarked) ...[
+                const SizedBox(height: 10),
+
+                ElevatedButton.icon(
+                  onPressed: _resetAttendance,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('NEXT STUDENT'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 14,
+                    ),
                   ),
                 ),
               ],
-            ),
-    );
-  }
 
-  Widget _verificationItem(
-    IconData icon,
-    String title,
-    bool verified,
-  ) {
-    return Column(
-      children: [
-        CircleAvatar(
-          radius: 28,
-          backgroundColor:
-              verified ? Colors.green : Colors.grey.shade300,
-          child: Icon(
-            icon,
-            color: verified
-                ? Colors.white
-                : Colors.grey.shade700,
-          ),
+              const SizedBox(height: 10),
+
+              OutlinedButton.icon(
+                onPressed: _stopCamera,
+                icon: const Icon(Icons.stop),
+                label: const Text('STOP CAMERA'),
+              ),
+            ],
+          ],
         ),
-        const SizedBox(height: 6),
-        Text(title),
-      ],
+      ),
     );
   }
 }
-            
