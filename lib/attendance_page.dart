@@ -163,16 +163,23 @@ class _AttendancePageState extends State<AttendancePage> {
         }
 
         // Eyes clearly open after being closed = blink.
-        if (eyeAverage > 0.65) {
-          if (_eyesClosed) {
-            _markAttendance();
-          } else {
-            setState(() {
-              _eyesClosed = false;
-              _status = 'Face detected. Blink करें।';
-            });
-          }
-        }
+if (eyeAverage > 0.65) {
+  if (_eyesClosed) {
+    setState(() {
+      _blinkDetected = true;
+      _status =
+          '✅ Face Verification Successful\n'
+          '✅ Eye Blink Verification Successful';
+    });
+
+    _markAttendance();
+  } else {
+    setState(() {
+      _eyesClosed = false;
+      _status = 'Face detected. Blink करें।';
+    });
+  }
+}
       } else if (faces.isEmpty) {
         setState(() {
           _faceDetected = false;
@@ -206,18 +213,24 @@ class _AttendancePageState extends State<AttendancePage> {
   }
 
   void _markAttendance() {
-    if (_attendanceMarked) return;
+  if (_attendanceMarked) return;
 
-    setState(() {
-      _blinkDetected = true;
-      _attendanceMarked = true;
-      _status = 'Attendance successfully marked!';
-    });
-
-    _showAttendanceDialog();
+  if (!_faceDetected || !_blinkDetected) {
+    return;
   }
 
-  void _showAttendanceDialog() {
+  setState(() {
+    _attendanceMarked = true;
+    _status =
+        '✅ Face Verification Successful\n'
+        '✅ Eye Blink Verification Successful\n'
+        '🟢 Attendance Marked Successfully!';
+  });
+
+  _showAttendanceDialog();
+}
+
+    void _showAttendanceDialog() {
     showDialog(
       context: context,
       barrierDismissible: false,
