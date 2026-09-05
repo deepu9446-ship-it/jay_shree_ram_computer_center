@@ -125,6 +125,7 @@ class _AttendancePageState extends State<AttendancePage> {
 
     try {
       final image = await _cameraController!.takePicture();
+
       final inputImage = InputImage.fromFilePath(image.path);
 
       final faces = await _faceDetector.processImage(inputImage);
@@ -137,41 +138,34 @@ class _AttendancePageState extends State<AttendancePage> {
         final leftEye = face.leftEyeOpenProbability;
         final rightEye = face.rightEyeOpenProbability;
 
-        setState(() {
-          _faceDetected = true;
-        });
+        if (leftEye != null && rightEye != null) {
+          final eyeAverage = (leftEye + rightEye) / 2;
 
-        if (leftEye == null || rightEye == null) {
-          setState(() {
-            _status =
-                'Eyes detect नहीं हो रही हैं। Camera में सीधे देखें।';
-          });
-          return;
-        }
+          final closed = eyeAverage < 0.30;
+          final open = eyeAverage > 0.70;
 
-        final eyeAverage = (leftEye + rightEye) / 2.0;
-
-        // Eyes clearly closed.
-        if (eyeAverage < 0.35) {
-          if (!_eyesClosed) {
+          if (closed) {
             setState(() {
+              _faceDetected = true;
               _eyesClosed = true;
               _status = 'Eyes closed detected. अब eyes खोलें।';
             });
+          } else if (open) {
+            if (_eyesClosed) {
+              _markAttendance();
+            } else {
+              setState(() {
+                _faceDetected = true;
+                _eyesClosed = false;
+                _status = 'Face detected. Blink करें।';
+              });
+            }
           }
-          return;
-        }
-
-        // Eyes clearly open after being closed = blink.
-        if (eyeAverage > 0.65) {
-          if (_eyesClosed) {
-            _markAttendance();
-          } else {
-            setState(() {
-              _eyesClosed = false;
-              _status = 'Face detected. Blink करें।';
-            });
-          }
+        } else {
+          setState(() {
+            _faceDetected = true;
+            _status = 'Face detected. Camera में सीधे देखें।';
+          });
         }
       } else if (faces.isEmpty) {
         setState(() {
@@ -182,25 +176,21 @@ class _AttendancePageState extends State<AttendancePage> {
       } else {
         setState(() {
           _faceDetected = false;
-          _eyesClosed = false;
           _status = 'Camera में केवल एक व्यक्ति होना चाहिए।';
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _status = 'Biometric processing error: ${e.toString()}';
+          _status = 'Biometric processing error.';
         });
       }
     } finally {
       _processing = false;
 
       if (mounted && _cameraReady && !_attendanceMarked) {
-        await Future.delayed(const Duration(milliseconds: 900));
-
-        if (mounted && _cameraReady && !_attendanceMarked) {
-          _processCamera();
-        }
+        await Future.delayed(const Duration(milliseconds: 700));
+        _processCamera();
       }
     }
   }
