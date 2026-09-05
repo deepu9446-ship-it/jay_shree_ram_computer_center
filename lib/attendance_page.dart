@@ -3,7 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
 class AttendancePage extends StatefulWidget {
-  const AttendancePage({super.key});
+  final String? studentName;
+  final String? studentId;
+  final String? course;
+
+  const AttendancePage({
+    super.key,
+    this.studentName,
+    this.studentId,
+    this.course,
+  });
 
   @override
   State<AttendancePage> createState() => _AttendancePageState();
@@ -29,6 +38,18 @@ class _AttendancePageState extends State<AttendancePage> {
   @override
   void initState() {
     super.initState();
+
+    if (widget.studentName != null) {
+      _nameController.text = widget.studentName!;
+    }
+
+    if (widget.studentId != null) {
+      _studentIdController.text = widget.studentId!;
+    }
+
+    if (widget.course != null) {
+      _courseController.text = widget.course!;
+    }
 
     _faceDetector = FaceDetector(
       options: FaceDetectorOptions(
