@@ -46,3 +46,6 @@ app.*.map.json
 *.apk
 apk-new/
 0.60
+*.apk
+apk-new/
+0.60
