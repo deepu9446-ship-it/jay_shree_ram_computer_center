@@ -152,7 +152,7 @@ class _AttendancePageState extends State<AttendancePage> {
         final eyeAverage = (leftEye + rightEye) / 2.0;
 
         // Eyes clearly closed.
-        if (eyeAverage < 0.35) {
+        if (eyeAverage < 0.45) {
           if (!_eyesClosed) {
             setState(() {
               _eyesClosed = true;
@@ -163,7 +163,7 @@ class _AttendancePageState extends State<AttendancePage> {
         }
 
         // Eyes clearly open after being closed = blink.
-if (eyeAverage > 0.65) {
+if (eyeAverage > 0.60) {
   if (_eyesClosed) {
     setState(() {
       _blinkDetected = true;
