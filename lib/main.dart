@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'attendance_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -302,6 +303,11 @@ class _DashboardPageState extends State<DashboardPage> {
       icon: Icons.location_on,
     ),
     DashboardItem(
+      title: 'Biometric Attendance',
+      subtitle: 'Face + Eye Blink',
+      icon: Icons.face_retouching_natural,
+    ),
+    DashboardItem(
       title: 'Reports',
       subtitle: 'View Reports',
       icon: Icons.bar_chart,
@@ -324,6 +330,10 @@ class _DashboardPageState extends State<DashboardPage> {
 
   if (item.title == 'Admission') {
     return const StudentProfilePage();
+  }
+
+  if (item.title == 'Biometric Attendance') {
+    return const AttendancePage();
   }
 
   return FeaturePage(
