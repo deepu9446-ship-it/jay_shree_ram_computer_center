@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'attendance_page.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -268,11 +267,6 @@ class _DashboardPageState extends State<DashboardPage> {
       icon: Icons.person_add,
     ),
     DashboardItem(
-      title: 'Attendance',
-      subtitle: 'Daily Attendance',
-      icon: Icons.fact_check,
-    ),
-    DashboardItem(
       title: 'Fees',
       subtitle: 'Fees Management',
       icon: Icons.currency_rupee,
@@ -330,9 +324,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
   if (item.title == 'Admission') {
     return const StudentProfilePage();
-  }
-    if (item.title == 'Attendance') {
-    return const AttendancePage();
   }
 
   return FeaturePage(
@@ -705,7 +696,6 @@ class _DashboardPageState extends State<DashboardPage> {
               'Fee payment received',
               'Today, 11:15 AM',
             ),
-            _activity(Icons.fact_check, 'Attendance marked', 'Today, 12:05 PM'),
           ],
         ),
       ),
@@ -786,14 +776,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     openFeature(items[1]);
                   },
                 ),
-                ListTile(
-                  leading: const Icon(Icons.fact_check),
-                  title: const Text('Attendance'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    openFeature(items[2]);
-                  },
-                ),
+
                 ListTile(
                   leading: const Icon(Icons.currency_rupee),
                   title: const Text('Fees'),
@@ -1554,20 +1537,6 @@ class _StudentListPageState extends
       },
     );
   }
-
-  void startStudentAttendance(Student student) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => AttendancePage(
-          studentName: student.studentName,
-          studentId: student.admissionNo,
-          course: student.course,
-        ),
-      ),
-    );
-  }
-
   void viewStudent(Student student) {
     showModalBottomSheet(
       context: context,
@@ -1777,10 +1746,6 @@ class _StudentListPageState extends
                               if (value == 'delete') {
                                 deleteStudent(realIndex);
                               }
-
-                              if (value == 'attendance') {
-                                startStudentAttendance(student);
-                              }
                             },
                             itemBuilder: (_) => const [
                               PopupMenuItem(
@@ -1795,13 +1760,6 @@ class _StudentListPageState extends
                                 child: ListTile(
                                   leading: Icon(Icons.edit),
                                   title: Text('Edit'),
-                                ),
-                              ),
-                              PopupMenuItem(
-                                value: 'attendance',
-                                child: ListTile(
-                                  leading: Icon(Icons.remove_red_eye),
-                                  title: Text('Biometric Attendance'),
                                 ),
                               ),
                               PopupMenuItem(

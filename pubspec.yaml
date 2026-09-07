@@ -10,8 +10,6 @@ environment:
 dependencies: 
   flutter:
     sdk: flutter
-  camera: ^0.12.1
-  google_mlkit_face_detection: ^0.15.1
   image_picker: ^1.2.0
 
 dev_dependencies:
