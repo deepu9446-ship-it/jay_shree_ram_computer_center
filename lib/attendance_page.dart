@@ -1,6 +1,7 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
@@ -83,13 +84,16 @@ class _AttendancePageState extends State<AttendancePage> {
         }
       }
 
-      _cameraController = CameraController(
+      final controller = CameraController(
         selectedCamera,
         ResolutionPreset.medium,
         enableAudio: false,
+        imageFormatGroup: ImageFormatGroup.yuv420,
       );
 
-      await _cameraController!.initialize();
+      _cameraController = controller;
+
+      await controller.initialize();
 
       if (!mounted) return;
 
@@ -99,36 +103,44 @@ class _AttendancePageState extends State<AttendancePage> {
         _eyesClosed = false;
         _blinkDetected = false;
         _attendanceMarked = false;
-        _status = 'Camera चालू है। Camera में देखें और blink करें।';
+        _status = '📷 Camera चालू है। Camera में सीधे देखें।';
       });
 
-      _processCamera();
+      await controller.startImageStream(_processCameraImage);
     } catch (e) {
-      _showMessage('Camera error: $e');
+      await _stopCamera();
+
+      if (mounted) {
+        _showMessage('Camera error: $e');
+      }
     }
   }
 
-  Future<void> _processCamera() async {
-    if (!_cameraReady ||
-        _cameraController == null ||
-        !_cameraController!.value.isInitialized ||
-        _processing ||
-        _attendanceMarked) {
+  Future<void> _processCameraImage(CameraImage image) async {
+    if (_processing ||
+        !_cameraReady ||
+        _attendanceMarked ||
+        _cameraController == null) {
       return;
     }
 
     _processing = true;
 
     try {
-      final image = await _cameraController!.takePicture();
-      final inputImage = InputImage.fromFilePath(image.path);
+      final inputImage = _convertCameraImage(
+        image,
+        _cameraController!.description,
+      );
+
+      if (inputImage == null) {
+        return;
+      }
+
       final faces = await _faceDetector.processImage(inputImage);
 
-      try {
-        await File(image.path).delete();
-      } catch (_) {}
-
-      if (!mounted) return;
+      if (!mounted || _attendanceMarked) {
+        return;
+      }
 
       if (faces.length == 1) {
         final face = faces.first;
@@ -142,85 +154,170 @@ class _AttendancePageState extends State<AttendancePage> {
 
         if (leftEye == null || rightEye == null) {
           setState(() {
-            _status = 'Eyes detect नहीं हो रही हैं। Camera में सीधे देखें।';
+            _status =
+                '👤 Face मिला, लेकिन आँखें detect नहीं हो रही हैं।';
           });
           return;
         }
 
         final eyeAverage = (leftEye + rightEye) / 2.0;
 
-        if (eyeAverage < 0.55) {
+        // Debug information
+        final eyeText =
+            'L:${leftEye.toStringAsFixed(2)} '
+            'R:${rightEye.toStringAsFixed(2)}';
+
+        // Eyes CLOSED
+        if (eyeAverage < 0.45) {
           if (!_eyesClosed) {
             setState(() {
               _eyesClosed = true;
-              _status = '👁️ Eyes closed detected. अब eyes खोलें।';
+              _status = '😉 Blink का पहला step detected\n$eyeText';
             });
           }
           return;
         }
 
-        if (eyeAverage >= 0.55) {
-          if (_eyesClosed) {
-            setState(() {
-              _blinkDetected = true;
-              _status =
-                  '✅ Face Verification Successful\n'
-                  '✅ Eye Blink Verification Successful';
-            });
+        // Eyes OPEN after being CLOSED = BLINK
+        if (eyeAverage > 0.65 && _eyesClosed) {
+          setState(() {
+            _blinkDetected = true;
+            _status =
+                '✅ Face Verification Successful\n'
+                '✅ Eye Blink Verification Successful\n'
+                '🟢 Attendance Marking...';
+          });
 
-            _markAttendance();
-          } else {
-            setState(() {
-              _eyesClosed = false;
-              _status = '🙂 Face detected. Blink करें।';
-            });
-          }
+          await _markAttendance();
+          return;
         }
+
+        setState(() {
+          _eyesClosed = false;
+          _status =
+              '👤 Face detected\n'
+              '👁️ Eyes: $eyeText\n'
+              '😉 एक बार blink करें।';
+        });
       } else if (faces.isEmpty) {
         setState(() {
           _faceDetected = false;
           _eyesClosed = false;
-          _status = 'Face नहीं मिला। Camera में देखें।';
+          _status = '🙂 Face नहीं मिला। Camera में देखें।';
         });
       } else {
         setState(() {
           _faceDetected = false;
           _eyesClosed = false;
-          _status = 'Camera में केवल एक व्यक्ति होना चाहिए।';
+          _status =
+              '⚠️ Camera में केवल एक व्यक्ति होना चाहिए।';
         });
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && !_attendanceMarked) {
         setState(() {
           _status = 'Biometric processing error: $e';
         });
       }
     } finally {
       _processing = false;
-
-      if (mounted && _cameraReady && !_attendanceMarked) {
-        await Future.delayed(const Duration(milliseconds: 900));
-
-        if (mounted && _cameraReady && !_attendanceMarked) {
-          _processCamera();
-        }
-      }
     }
   }
 
-  void _markAttendance() {
+  InputImage? _convertCameraImage(
+    CameraImage image,
+    CameraDescription camera,
+  ) {
+    try {
+      if (image.planes.length < 2) {
+        return null;
+      }
+
+      // Android YUV420 -> NV21
+      final yPlane = image.planes[0];
+      final uPlane = image.planes[1];
+      final vPlane = image.planes[2];
+
+      final ySize = image.width * image.height;
+      final uvSize = ySize ~/ 2;
+
+      final nv21 = Uint8List(ySize + uvSize);
+
+      int offset = 0;
+
+      // Y plane
+      for (int row = 0; row < image.height; row++) {
+        final rowStart = row * yPlane.bytesPerRow;
+
+        for (int col = 0; col < image.width; col++) {
+          nv21[offset++] = yPlane.bytes[rowStart + col];
+        }
+      }
+
+      // VU planes
+      final uvRowStride = uPlane.bytesPerRow;
+      final uvPixelStride = uPlane.bytesPerPixel ?? 1;
+
+      for (int row = 0; row < image.height ~/ 2; row++) {
+        final rowStart = row * uvRowStride;
+
+        for (int col = 0; col < image.width ~/ 2; col++) {
+          final pixel = rowStart + col * uvPixelStride;
+
+          if (pixel < vPlane.bytes.length &&
+              pixel < uPlane.bytes.length) {
+            nv21[offset++] = vPlane.bytes[pixel];
+            nv21[offset++] = uPlane.bytes[pixel];
+          }
+        }
+      }
+
+      final rotation = InputImageRotationValue.fromRawValue(
+        camera.sensorOrientation,
+      );
+
+      if (rotation == null) {
+        return null;
+      }
+
+      final metadata = InputImageMetadata(
+        size: Size(
+          image.width.toDouble(),
+          image.height.toDouble(),
+        ),
+        rotation: rotation,
+        format: InputImageFormat.nv21,
+        bytesPerRow: image.width,
+      );
+
+      return InputImage.fromBytes(
+        bytes: nv21,
+        metadata: metadata,
+      );
+    } catch (e) {
+      debugPrint('Camera conversion error: $e');
+      return null;
+    }
+  }
+
+  Future<void> _markAttendance() async {
     if (_attendanceMarked) return;
     if (!_faceDetected || !_blinkDetected) return;
 
-    setState(() {
-      _attendanceMarked = true;
-      _status =
-          '✅ Face Verification Successful\n'
-          '✅ Eye Blink Verification Successful\n'
-          '🟢 Attendance Marked Successfully!';
-    });
+    _attendanceMarked = true;
 
-    _showAttendanceDialog();
+    if (mounted) {
+      setState(() {
+        _status =
+            '✅ Face Verification Successful\n'
+            '✅ Eye Blink Verification Successful\n'
+            '🟢 Attendance Marked Successfully!';
+      });
+    }
+
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    await _showAttendanceDialog();
   }
 
   Future<void> _showAttendanceDialog() async {
@@ -237,9 +334,14 @@ class _AttendancePageState extends State<AttendancePage> {
         return AlertDialog(
           title: const Row(
             children: [
-              Icon(Icons.check_circle, color: Colors.green),
+              Icon(
+                Icons.check_circle,
+                color: Colors.green,
+              ),
               SizedBox(width: 10),
-              Expanded(child: Text('Attendance Marked')),
+              Expanded(
+                child: Text('Attendance Marked'),
+              ),
             ],
           ),
           content: Column(
@@ -248,14 +350,20 @@ class _AttendancePageState extends State<AttendancePage> {
             children: [
               Text('Name: ${_nameController.text}'),
               const SizedBox(height: 8),
-              Text('Student ID: ${_studentIdController.text}'),
+              Text(
+                'Student ID: ${_studentIdController.text}',
+              ),
               const SizedBox(height: 8),
               Text('Course: ${_courseController.text}'),
               const SizedBox(height: 8),
-              Text('Date: ${now.day}/${now.month}/${now.year}'),
+              Text(
+                'Date: '
+                '${now.day}/${now.month}/${now.year}',
+              ),
               const SizedBox(height: 8),
               Text(
-                'Time: ${now.hour.toString().padLeft(2, '0')}:'
+                'Time: '
+                '${now.hour.toString().padLeft(2, '0')}:'
                 '${now.minute.toString().padLeft(2, '0')}:'
                 '${now.second.toString().padLeft(2, '0')}',
               ),
@@ -282,7 +390,15 @@ class _AttendancePageState extends State<AttendancePage> {
     _cameraController = null;
 
     if (controller != null) {
-      await controller.dispose();
+      try {
+        if (controller.value.isStreamingImages) {
+          await controller.stopImageStream();
+        }
+      } catch (_) {}
+
+      try {
+        await controller.dispose();
+      } catch (_) {}
     }
 
     if (mounted) {
@@ -298,7 +414,8 @@ class _AttendancePageState extends State<AttendancePage> {
       _eyesClosed = false;
       _blinkDetected = false;
       _attendanceMarked = false;
-      _status = 'Details भरें और Start Verification दबाएँ।';
+      _status =
+          'Details भरें और Start Verification दबाएँ।';
     });
   }
 
@@ -306,7 +423,9 @@ class _AttendancePageState extends State<AttendancePage> {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(
+        content: Text(message),
+      ),
     );
   }
 
@@ -393,8 +512,11 @@ class _AttendancePageState extends State<AttendancePage> {
               Card(
                 clipBehavior: Clip.antiAlias,
                 child: AspectRatio(
-                  aspectRatio: _cameraController!.value.aspectRatio,
-                  child: CameraPreview(_cameraController!),
+                  aspectRatio:
+                      _cameraController!.value.aspectRatio,
+                  child: CameraPreview(
+                    _cameraController!,
+                  ),
                 ),
               ),
 
@@ -442,7 +564,9 @@ class _AttendancePageState extends State<AttendancePage> {
                   style: FilledButton.styleFrom(
                     backgroundColor: Colors.orange,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 15,
+                    ),
                   ),
                 ),
               ),
