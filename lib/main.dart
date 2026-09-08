@@ -307,6 +307,11 @@ class _DashboardPageState extends State<DashboardPage> {
       subtitle: 'Face + Eye Blink',
       icon: Icons.face_retouching_natural,
     ),
+   DashboardItem(
+  title: 'Receipt Management',
+  subtitle: 'Create & Manage Receipts',
+  icon: Icons.receipt_long,
+),
     DashboardItem(
       title: 'Reports',
       subtitle: 'View Reports',
@@ -332,9 +337,12 @@ class _DashboardPageState extends State<DashboardPage> {
     return const StudentProfilePage();
   }
 
-  if (item.title == 'Biometric Attendance') {
+   if (item.title == 'Biometric Attendance') {
     return const AttendancePage();
   }
+ if (item.title == 'Receipt Management') {
+  return const ReceiptManagementPage();
+}
 
   return FeaturePage(
             title: item.title,
@@ -1793,5 +1801,253 @@ class _StudentListPageState extends
         ],
       ),
     );
+  }
+}
+class ReceiptManagementPage extends StatefulWidget {
+  const ReceiptManagementPage({super.key});
+
+  @override
+  State<ReceiptManagementPage> createState() =>
+      _ReceiptManagementPageState();
+}
+
+class _ReceiptManagementPageState
+    extends State<ReceiptManagementPage> {
+  final studentController = TextEditingController();
+  final courseController = TextEditingController();
+  final amountController = TextEditingController();
+
+  DateTime selectedDate = DateTime.now();
+
+  final List<Map<String, String>> receipts = [];
+
+  void saveReceipt() {
+    if (studentController.text.trim().isEmpty ||
+        courseController.text.trim().isEmpty ||
+        amountController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill all details'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final receiptNumber =
+        'RCP-${(receipts.length + 1).toString().padLeft(3, '0')}';
+
+    setState(() {
+      receipts.add({
+        'receipt': receiptNumber,
+        'student': studentController.text.trim(),
+        'course': courseController.text.trim(),
+        'amount': amountController.text.trim(),
+        'date':
+            '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+      });
+    });
+
+    studentController.clear();
+    courseController.clear();
+    amountController.clear();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$receiptNumber saved successfully'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  Future<void> selectDate() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+
+    if (date != null) {
+      setState(() {
+        selectedDate = date;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Receipt Management'),
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
+      ),
+
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Card(
+            elevation: 4,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  const Icon(
+                    Icons.receipt_long,
+                    size: 60,
+                    color: Colors.orange,
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  const Text(
+                    'Create New Receipt',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  TextField(
+                    controller: studentController,
+                    decoration: const InputDecoration(
+                      labelText: 'Student Name',
+                      prefixIcon: Icon(Icons.person),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  TextField(
+                    controller: courseController,
+                    decoration: const InputDecoration(
+                      labelText: 'Course',
+                      prefixIcon: Icon(Icons.school),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  TextField(
+                    controller: amountController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Amount',
+                      prefixIcon: Icon(Icons.currency_rupee),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: const BorderSide(color: Colors.grey),
+                    ),
+                    leading: const Icon(
+                      Icons.calendar_month,
+                      color: Colors.orange,
+                    ),
+                    title: const Text('Receipt Date'),
+                    subtitle: Text(
+                      '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                    ),
+                    onTap: selectDate,
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton.icon(
+                      onPressed: saveReceipt,
+                      icon: const Icon(Icons.save),
+                      label: const Text(
+                        'SAVE RECEIPT',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          const Text(
+            'Receipt History',
+            style: TextStyle(
+              fontSize: 21,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          if (receipts.isEmpty)
+            const Card(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: Center(
+                  child: Text('No receipts created yet'),
+                ),
+              ),
+            ),
+
+          ...receipts.map(
+            (receipt) => Card(
+              child: ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Colors.orange,
+                  child: Icon(
+                    Icons.receipt,
+                    color: Colors.white,
+                  ),
+                ),
+                title: Text(
+                  receipt['receipt']!,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: Text(
+                  '${receipt['student']}\n'
+                  '${receipt['course']} • ${receipt['date']}',
+                ),
+                trailing: Text(
+                  '₹${receipt['amount']}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    studentController.dispose();
+    courseController.dispose();
+    amountController.dispose();
+    super.dispose();
   }
 }
