@@ -2,6 +2,7 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
 class AttendancePage extends StatefulWidget {
@@ -303,6 +304,94 @@ class _AttendancePageState extends State<AttendancePage> {
     if (_attendanceMarked) return;
     if (!_faceDetected || !_blinkDetected) return;
 
+    final prefs = await SharedPreferences.getInstance();
+
+    final studentId = _studentIdController.text.trim();
+    final name = _nameController.text.trim();
+    final course = _courseController.text.trim();
+
+    final now = DateTime.now();
+
+    final dateKey =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+
+    // Student ID + Date = unique attendance key
+    final attendanceKey = 'attendance_${studentId}_$dateKey';
+
+    // Same student की आज की attendance पहले से marked है या नहीं
+    if (prefs.getBool(attendanceKey) == true) {
+      _attendanceMarked = true;
+
+      if (mounted) {
+        setState(() {
+          _status =
+              '⚠️ आज की attendance पहले ही marked है।\n'
+              'Student ID: $studentId\n'
+              'Date: ${now.day}/${now.month}/${now.year}';
+        });
+      }
+
+      await _stopCamera();
+
+      if (!mounted) return;
+
+      await showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Row(
+              children: [
+                Icon(
+                  Icons.info,
+                  color: Colors.orange,
+                ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text('Attendance Already Marked'),
+                ),
+              ],
+            ),
+            content: Text(
+              'इस Student की आज की attendance पहले ही marked है।\n\n'
+              'Student ID: $studentId\n'
+              'Date: ${now.day}/${now.month}/${now.year}',
+            ),
+            actions: [
+              FilledButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _resetVerification();
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+
+      return;
+    }
+
+    // Attendance permanently save करें
+    await prefs.setBool(attendanceKey, true);
+    await prefs.setString('${attendanceKey}_name', name);
+    await prefs.setString('${attendanceKey}_studentId', studentId);
+    await prefs.setString('${attendanceKey}_course', course);
+    await prefs.setString(
+      '${attendanceKey}_date',
+      '${now.day}/${now.month}/${now.year}',
+    );
+    await prefs.setString(
+      '${attendanceKey}_time',
+      '${now.hour.toString().padLeft(2, '0')}:'
+      '${now.minute.toString().padLeft(2, '0')}:'
+      '${now.second.toString().padLeft(2, '0')}',
+    );
+    await prefs.setString(
+      '${attendanceKey}_verification',
+      'Face + Eye Blink Verified',
+    );
+
     _attendanceMarked = true;
 
     if (mounted) {
@@ -310,7 +399,7 @@ class _AttendancePageState extends State<AttendancePage> {
         _status =
             '✅ Face Verification Successful\n'
             '✅ Eye Blink Verification Successful\n'
-            '🟢 Attendance Marked Successfully!';
+            '💾 Attendance Saved Successfully!';
       });
     }
 
