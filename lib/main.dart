@@ -1,6 +1,8 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'attendance_page.dart';
 
 void main() {
@@ -340,7 +342,11 @@ class _DashboardPageState extends State<DashboardPage> {
    if (item.title == 'Biometric Attendance') {
     return const AttendancePage();
   }
- if (item.title == 'Receipt Management') {
+ if (item.title == 'Fees') {
+  return const FeesManagementPage();
+}
+
+if (item.title == 'Receipt Management') {
   return const ReceiptManagementPage();
 }
 
@@ -2051,3 +2057,405 @@ class _ReceiptManagementPageState
     super.dispose();
   }
 }
+
+class FeesManagementPage extends StatefulWidget {
+  const FeesManagementPage({super.key});
+
+  @override
+  State<FeesManagementPage> createState() => _FeesManagementPageState();
+}
+
+class _FeesManagementPageState extends State<FeesManagementPage> {
+  final List<Map<String, dynamic>> records = [];
+
+  final nameController = TextEditingController();
+  final idController = TextEditingController();
+  final courseController = TextEditingController();
+  final totalController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecords();
+  }
+
+  Future<void> _loadRecords() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = prefs.getString('jsrc_fee_records');
+
+    if (data != null && data.isNotEmpty) {
+      final decoded = jsonDecode(data);
+
+      setState(() {
+        records.clear();
+        records.addAll(
+          List<Map<String, dynamic>>.from(decoded),
+        );
+      });
+    }
+  }
+
+  Future<void> _saveRecords() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      'jsrc_fee_records',
+      jsonEncode(records),
+    );
+  }
+
+  void _addStudent() {
+    final name = nameController.text.trim();
+    final studentId = idController.text.trim();
+    final course = courseController.text.trim();
+    final total = double.tryParse(totalController.text.trim());
+
+    if (name.isEmpty ||
+        studentId.isEmpty ||
+        course.isEmpty ||
+        total == null ||
+        total <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('सभी जानकारी सही भरें'),
+        ),
+      );
+      return;
+    }
+
+    final installment = total / 12;
+
+    final installments = List.generate(12, (index) {
+      return {
+        'month': 'Month ${index + 1}',
+        'amount': installment,
+        'paidAmount': 0.0,
+        'status': 'Pending',
+        'paidDate': '',
+        'receiptNo': '',
+      };
+    });
+
+    setState(() {
+      records.add({
+        'id': DateTime.now().millisecondsSinceEpoch.toString(),
+        'studentName': name,
+        'studentId': studentId,
+        'course': course,
+        'totalFees': total,
+        'installmentAmount': installment,
+        'admissionDate':
+            DateTime.now().toIso8601String(),
+        'installments': installments,
+      });
+    });
+
+    _saveRecords();
+
+    nameController.clear();
+    idController.clear();
+    courseController.clear();
+    totalController.clear();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Student Fees Record Save हो गया'),
+      ),
+    );
+  }
+
+  double _totalPaid(Map<String, dynamic> student) {
+    final list =
+        List<Map<String, dynamic>>.from(student['installments']);
+
+    return list.fold<double>(
+      0,
+      (sum, item) =>
+          sum + ((item['paidAmount'] ?? 0) as num).toDouble(),
+    );
+  }
+
+  Future<void> _payInstallment(
+    Map<String, dynamic> student,
+    int index,
+  ) async {
+    final amountController = TextEditingController();
+    final receiptController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Payment - ${index + 1}'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Installment: ₹${(student['installments'][index]['amount'] as num).toStringAsFixed(0)}',
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Paid Amount',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: receiptController,
+                decoration: const InputDecoration(
+                  labelText: 'Receipt Number',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final paid =
+                    double.tryParse(amountController.text.trim());
+
+                if (paid == null || paid <= 0) {
+                  return;
+                }
+
+                final installment =
+                    (student['installments'][index]['amount'] as num)
+                        .toDouble();
+
+                setState(() {
+                  student['installments'][index]['paidAmount'] =
+                      paid;
+                  student['installments'][index]['status'] =
+                      paid >= installment ? 'Paid' : 'Partial';
+                  student['installments'][index]['paidDate'] =
+                      DateTime.now().toIso8601String();
+                  student['installments'][index]['receiptNo'] =
+                      receiptController.text.trim();
+                });
+
+                _saveRecords();
+                Navigator.pop(context);
+              },
+              child: const Text('Save Payment'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _deleteStudent(int index) {
+    setState(() {
+      records.removeAt(index);
+    });
+
+    _saveRecords();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Fees Management'),
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(12),
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                children: [
+                  const Text(
+                    'Add Student Fees',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Student Name',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  TextField(
+                    controller: idController,
+                    decoration: const InputDecoration(
+                      labelText: 'Student ID',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  TextField(
+                    controller: courseController,
+                    decoration: const InputDecoration(
+                      labelText: 'Course',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  TextField(
+                    controller: totalController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Total Fees',
+                      prefixText: '₹ ',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: _addStudent,
+                      icon: const Icon(Icons.save),
+                      label: const Text('Save Fees Record'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          if (records.isEmpty)
+            const Card(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: Center(
+                  child: Text('अभी कोई Fees Record नहीं है'),
+                ),
+              ),
+            ),
+
+          ...records.asMap().entries.map((entry) {
+            final index = entry.key;
+            final student = entry.value;
+
+            final total =
+                (student['totalFees'] as num).toDouble();
+            final paid = _totalPaid(student);
+            final pending = total - paid;
+
+            return Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              child: ExpansionTile(
+                title: Text(
+                  student['studentName'] ?? '',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: Text(
+                  '${student['course']} • ${student['studentId']}',
+                ),
+                children: [
+                  ListTile(
+                    title: const Text('Total Fees'),
+                    trailing: Text(
+                      '₹${total.toStringAsFixed(0)}',
+                    ),
+                  ),
+                  ListTile(
+                    title: const Text('Total Paid'),
+                    trailing: Text(
+                      '₹${paid.toStringAsFixed(0)}',
+                    ),
+                  ),
+                  ListTile(
+                    title: const Text('Pending'),
+                    trailing: Text(
+                      '₹${pending.toStringAsFixed(0)}',
+                    ),
+                  ),
+
+                  const Divider(),
+
+                  ...List.generate(12, (monthIndex) {
+                    final installment =
+                        student['installments'][monthIndex];
+
+                    final amount =
+                        (installment['amount'] as num).toDouble();
+
+                    final paidAmount =
+                        (installment['paidAmount'] as num).toDouble();
+
+                    final status =
+                        installment['status'] ?? 'Pending';
+
+                    return ListTile(
+                      leading: CircleAvatar(
+                        child: Text('${monthIndex + 1}'),
+                      ),
+                      title: Text(
+                        '${installment['month']} - ₹${amount.toStringAsFixed(0)}',
+                      ),
+                      subtitle: Text(
+                        'Paid: ₹${paidAmount.toStringAsFixed(0)} • $status',
+                      ),
+                      trailing: status == 'Paid'
+                          ? const Icon(
+                              Icons.check_circle,
+                              color: Colors.green,
+                            )
+                          : IconButton(
+                              icon: const Icon(
+                                Icons.payment,
+                                color: Colors.orange,
+                              ),
+                              onPressed: () =>
+                                  _payInstallment(
+                                student,
+                                monthIndex,
+                              ),
+                            ),
+                    );
+                  }),
+
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: OutlinedButton.icon(
+                      onPressed: () => _deleteStudent(index),
+                      icon: const Icon(Icons.delete),
+                      label: const Text('Delete Record'),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    idController.dispose();
+    courseController.dispose();
+    totalController.dispose();
+    super.dispose();
+  }
+}
+
