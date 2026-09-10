@@ -1527,6 +1527,10 @@ if (item.title == 'Receipt Management') {
   return const ReceiptManagementPage();
 }
 
+if (item.title == 'Settings') {
+  return const SettingsPage();
+}
+
         
 
         return FeaturePage(
@@ -2034,7 +2038,310 @@ class DashboardItem {
     required this.icon,
   });
 }
+class SettingsPage extends StatefulWidget {
+  const SettingsPage({super.key});
 
+  @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  bool notifications = true;
+  bool biometricAttendance = true;
+  bool autoBackup = true;
+  bool darkMode = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F7FB),
+      appBar: AppBar(
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
+        title: const Text(
+          'Settings',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [
+                  Colors.orange,
+                  Color(0xFFFF8F00),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Row(
+              children: [
+                CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.white,
+                  child: Icon(
+                    Icons.settings,
+                    color: Colors.orange,
+                    size: 32,
+                  ),
+                ),
+                SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Application Settings',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 5),
+                      Text(
+                        'Jay Shree Ram Computer Center',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          _sectionTitle('General Settings'),
+
+          Card(
+            child: SwitchListTile(
+              secondary: const Icon(Icons.notifications_outlined),
+              title: const Text('Notifications'),
+              subtitle: const Text('Enable application notifications'),
+              value: notifications,
+              onChanged: (value) {
+                setState(() {
+                  notifications = value;
+                });
+              },
+            ),
+          ),
+
+          Card(
+            child: SwitchListTile(
+              secondary: const Icon(Icons.fingerprint),
+              title: const Text('Biometric Attendance'),
+              subtitle: const Text('Face & eye blink verification'),
+              value: biometricAttendance,
+              onChanged: (value) {
+                setState(() {
+                  biometricAttendance = value;
+                });
+              },
+            ),
+          ),
+
+          Card(
+            child: SwitchListTile(
+              secondary: const Icon(Icons.backup_outlined),
+              title: const Text('Automatic Backup'),
+              subtitle: const Text('Automatically backup application data'),
+              value: autoBackup,
+              onChanged: (value) {
+                setState(() {
+                  autoBackup = value;
+                });
+              },
+            ),
+          ),
+
+          Card(
+            child: SwitchListTile(
+              secondary: const Icon(Icons.dark_mode_outlined),
+              title: const Text('Dark Mode'),
+              subtitle: const Text('Use dark appearance'),
+              value: darkMode,
+              onChanged: (value) {
+                setState(() {
+                  darkMode = value;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        value
+                            ? 'Dark Mode enabled'
+                            : 'Dark Mode disabled',
+                      ),
+                    ),
+                  );
+                });
+              },
+            ),
+          ),
+
+          const SizedBox(height: 18),
+
+          _sectionTitle('Center Information'),
+
+          Card(
+            child: Column(
+              children: [
+                const ListTile(
+                  leading: Icon(Icons.school),
+                  title: Text('Center Name'),
+                  subtitle: Text(
+                    'Jay Shree Ram Computer Center',
+                  ),
+                ),
+                const Divider(height: 1),
+                const ListTile(
+                  leading: Icon(Icons.location_on_outlined),
+                  title: Text('Location'),
+                  subtitle: Text(
+                    'Chhindwara, Madhya Pradesh',
+                  ),
+                ),
+                const Divider(height: 1),
+                const ListTile(
+                  leading: Icon(Icons.business),
+                  title: Text('Computer Center'),
+                  subtitle: Text(
+                    'Computer Education & Training Center',
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 18),
+
+          _sectionTitle('Data Management'),
+
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.backup),
+              title: const Text('Backup Data'),
+              subtitle: const Text(
+                'Create a backup of application data',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Backup feature ready'),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.restore),
+              title: const Text('Restore Data'),
+              subtitle: const Text(
+                'Restore previously saved data',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Restore feature ready'),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: 18),
+
+          _sectionTitle('About'),
+
+          Card(
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.info_outline),
+                  title: const Text('About JSRC'),
+                  subtitle: const Text(
+                    'Jay Shree Ram Computer Center',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    showAboutDialog(
+                      context: context,
+                      applicationName:
+                          'Jay Shree Ram Computer Center',
+                      applicationVersion: '1.0.0',
+                      applicationLegalese:
+                          'Computer Education & Training Center',
+                    );
+                  },
+                ),
+                const Divider(height: 1),
+                const ListTile(
+                  leading: Icon(Icons.verified),
+                  title: Text('Application Version'),
+                  subtitle: Text('Version 1.0.0'),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 30),
+
+          SizedBox(
+            height: 50,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              icon: const Icon(Icons.arrow_back),
+              label: const Text(
+                'Back to Dashboard',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+          ),
+
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(
+        left: 4,
+        bottom: 8,
+      ),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
 class FeaturePage extends StatelessWidget {
   final String title;
   final String subtitle;
