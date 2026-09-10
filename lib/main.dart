@@ -342,10 +342,13 @@ class _DashboardPageState extends State<DashboardPage> {
    if (item.title == 'Biometric Attendance') {
     return const AttendancePage();
   }
- if (item.title == 'Fees') {
+   return const FeesManagementPage();
+}if (item.title == 'Fees') {
   return const FeesManagementPage();
 }
-
+if (item.title == 'Staff') {
+  return const StaffManagementPage();
+}
 if (item.title == 'Receipt Management') {
   return const ReceiptManagementPage();
 }
@@ -2458,4 +2461,585 @@ class _FeesManagementPageState extends State<FeesManagementPage> {
     super.dispose();
   }
 }
+class StaffManagementPage extends StatefulWidget {
+  const StaffManagementPage({super.key});
 
+  @override
+  State<StaffManagementPage> createState() => _StaffManagementPageState();
+}
+
+class _StaffManagementPageState extends State<StaffManagementPage> {
+  static const String _storageKey = 'jsrc_staff_records';
+
+  final _formKey = GlobalKey<FormState>();
+
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _staffIdController = TextEditingController();
+  final TextEditingController _mobileController = TextEditingController();
+  final TextEditingController _designationController = TextEditingController();
+  final TextEditingController _subjectController = TextEditingController();
+  final TextEditingController _salaryController = TextEditingController();
+
+  List<Map<String, dynamic>> _staffList = [];
+  String _searchText = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStaff();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _staffIdController.dispose();
+    _mobileController.dispose();
+    _designationController.dispose();
+    _subjectController.dispose();
+    _salaryController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadStaff() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = prefs.getString(_storageKey);
+
+    if (data != null && data.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(data);
+
+        if (decoded is List) {
+          setState(() {
+            _staffList = decoded
+                .map<Map<String, dynamic>>(
+                  (e) => Map<String, dynamic>.from(e as Map),
+                )
+                .toList();
+          });
+        }
+      } catch (_) {
+        setState(() {
+          _staffList = [];
+        });
+      }
+    }
+  }
+
+  Future<void> _saveStaffRecords() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_storageKey, jsonEncode(_staffList));
+  }
+
+  Future<void> _saveRecord() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    final record = <String, dynamic>{
+      'id': DateTime.now().millisecondsSinceEpoch.toString(),
+      'name': _nameController.text.trim(),
+      'staffId': _staffIdController.text.trim(),
+      'mobile': _mobileController.text.trim(),
+      'designation': _designationController.text.trim(),
+      'subject': _subjectController.text.trim(),
+      'salary': _salaryController.text.trim(),
+      'joiningDate':
+          '${DateTime.now().day.toString().padLeft(2, '0')}/'
+          '${DateTime.now().month.toString().padLeft(2, '0')}/'
+          '${DateTime.now().year}',
+      'status': 'Active',
+    };
+
+    setState(() {
+      _staffList.insert(0, record);
+    });
+
+    await _saveStaffRecords();
+    _clearForm();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Staff Record Saved Successfully'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  void _clearForm() {
+    _nameController.clear();
+    _staffIdController.clear();
+    _mobileController.clear();
+    _designationController.clear();
+    _subjectController.clear();
+    _salaryController.clear();
+  }
+
+  Future<void> _deleteStaff(int index) async {
+    final staff = _filteredStaff[index];
+
+    final actualIndex = _staffList.indexWhere(
+      (item) => item['id'] == staff['id'],
+    );
+
+    if (actualIndex == -1) return;
+
+    setState(() {
+      _staffList.removeAt(actualIndex);
+    });
+
+    await _saveStaffRecords();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Staff Record Deleted'),
+      ),
+    );
+  }
+
+  Future<void> _toggleStatus(int index) async {
+    final staff = _filteredStaff[index];
+
+    final actualIndex = _staffList.indexWhere(
+      (item) => item['id'] == staff['id'],
+    );
+
+    if (actualIndex == -1) return;
+
+    setState(() {
+      _staffList[actualIndex]['status'] =
+          _staffList[actualIndex]['status'] == 'Active'
+              ? 'Inactive'
+              : 'Active';
+    });
+
+    await _saveStaffRecords();
+  }
+
+  void _showStaffDetails(Map<String, dynamic> staff) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              const Icon(Icons.badge, color: Colors.orange),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  staff['name']?.toString() ?? 'Staff',
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _detailRow('Staff ID', staff['staffId']),
+                _detailRow('Mobile', staff['mobile']),
+                _detailRow('Designation', staff['designation']),
+                _detailRow('Subject/Course', staff['subject']),
+                _detailRow('Salary', staff['salary']),
+                _detailRow('Joining Date', staff['joiningDate']),
+                _detailRow('Status', staff['status']),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _detailRow(String title, dynamic value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: RichText(
+        text: TextSpan(
+          style: DefaultTextStyle.of(context).style,
+          children: [
+            TextSpan(
+              text: '$title: ',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            TextSpan(
+              text: value?.toString() ?? '-',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<Map<String, dynamic>> get _filteredStaff {
+    if (_searchText.trim().isEmpty) {
+      return _staffList;
+    }
+
+    final query = _searchText.toLowerCase();
+
+    return _staffList.where((staff) {
+      return (staff['name']?.toString().toLowerCase().contains(query) ??
+              false) ||
+          (staff['staffId']?.toString().toLowerCase().contains(query) ??
+              false) ||
+          (staff['mobile']?.toString().toLowerCase().contains(query) ??
+              false) ||
+          (staff['designation']?.toString().toLowerCase().contains(query) ??
+              false);
+    }).toList();
+  }
+
+  InputDecoration _inputDecoration(
+    String label,
+    IconData icon,
+  ) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      filled: true,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Staff Management'),
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          _clearForm();
+          Scrollable.ensureVisible(
+            _formKey.currentContext!,
+            duration: const Duration(milliseconds: 400),
+          );
+        },
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.person_add),
+        label: const Text('Add Staff'),
+      ),
+      body: RefreshIndicator(
+        onRefresh: _loadStaff,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Card(
+              elevation: 3,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(
+                            Icons.person_add_alt_1,
+                            color: Colors.orange,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Add New Staff',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      TextFormField(
+                        controller: _nameController,
+                        decoration: _inputDecoration(
+                          'Staff Name',
+                          Icons.person,
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Staff name required';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      TextFormField(
+                        controller: _staffIdController,
+                        decoration: _inputDecoration(
+                          'Staff ID',
+                          Icons.badge,
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Staff ID required';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      TextFormField(
+                        controller: _mobileController,
+                        keyboardType: TextInputType.phone,
+                        decoration: _inputDecoration(
+                          'Mobile Number',
+                          Icons.phone,
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Mobile number required';
+                          }
+
+                          if (value.trim().length < 10) {
+                            return 'Enter valid mobile number';
+                          }
+
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      TextFormField(
+                        controller: _designationController,
+                        decoration: _inputDecoration(
+                          'Designation',
+                          Icons.work,
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Designation required';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      TextFormField(
+                        controller: _subjectController,
+                        decoration: _inputDecoration(
+                          'Subject / Course',
+                          Icons.menu_book,
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      TextFormField(
+                        controller: _salaryController,
+                        keyboardType: TextInputType.number,
+                        decoration: _inputDecoration(
+                          'Monthly Salary',
+                          Icons.currency_rupee,
+                        ),
+                      ),
+
+                      const SizedBox(height: 18),
+
+                      SizedBox(
+                        height: 52,
+                        child: ElevatedButton.icon(
+                          onPressed: _saveRecord,
+                          icon: const Icon(Icons.save),
+                          label: const Text(
+                            'Save Record',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            TextField(
+              onChanged: (value) {
+                setState(() {
+                  _searchText = value;
+                });
+              },
+              decoration: InputDecoration(
+                hintText: 'Search Staff...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Staff Records',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                CircleAvatar(
+                  backgroundColor: Colors.orange,
+                  child: Text(
+                    '${_staffList.length}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 10),
+
+            if (_filteredStaff.isEmpty)
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(30),
+                  child: Column(
+                    children: [
+                      const Icon(
+                        Icons.people_outline,
+                        size: 60,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        _staffList.isEmpty
+                            ? 'No Staff Records'
+                            : 'No matching staff found',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              ...List.generate(
+                _filteredStaff.length,
+                (index) {
+                  final staff = _filteredStaff[index];
+                  final isActive = staff['status'] == 'Active';
+
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor:
+                            isActive ? Colors.orange : Colors.grey,
+                        child: const Icon(
+                          Icons.person,
+                          color: Colors.white,
+                        ),
+                      ),
+                      title: Text(
+                        staff['name']?.toString() ?? '',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: Text(
+                        '${staff['staffId']} • '
+                        '${staff['designation']}\n'
+                        '${staff['mobile']}',
+                      ),
+                      isThreeLine: true,
+                      trailing: PopupMenuButton<String>(
+                        onSelected: (value) async {
+                          if (value == 'view') {
+                            _showStaffDetails(staff);
+                          } else if (value == 'status') {
+                            await _toggleStatus(index);
+                          } else if (value == 'delete') {
+                            await _deleteStaff(index);
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'view',
+                            child: ListTile(
+                              leading: Icon(Icons.visibility),
+                              title: Text('View Profile'),
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'status',
+                            child: ListTile(
+                              leading: Icon(
+                                isActive
+                                    ? Icons.person_off
+                                    : Icons.person,
+                              ),
+                              title: Text(
+                                isActive
+                                    ? 'Set Inactive'
+                                    : 'Set Active',
+                              ),
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: ListTile(
+                              leading: Icon(
+                                Icons.delete,
+                                color: Colors.red,
+                              ),
+                              title: Text('Delete'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+
+            const SizedBox(height: 80),
+          ],
+        ),
+      ),
+    );
+  }
+}
