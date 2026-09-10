@@ -2481,6 +2481,7 @@ class _StaffManagementPageState extends State<StaffManagementPage> {
   final TextEditingController _designationController = TextEditingController();
   final TextEditingController _subjectController = TextEditingController();
   final TextEditingController _salaryController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
 
   List<Map<String, dynamic>> _staffList = [];
   String _searchText = '';
@@ -2544,7 +2545,8 @@ class _StaffManagementPageState extends State<StaffManagementPage> {
       'mobile': _mobileController.text.trim(),
       'designation': _designationController.text.trim(),
       'subject': _subjectController.text.trim(),
-      'salary': _salaryController.text.trim(),
+      'salary': _salaryController.text.trim(),            
+'address': _addressController.text.trim(),
       'joiningDate':
           '${DateTime.now().day.toString().padLeft(2, '0')}/'
           '${DateTime.now().month.toString().padLeft(2, '0')}/'
@@ -2576,6 +2578,7 @@ class _StaffManagementPageState extends State<StaffManagementPage> {
     _designationController.clear();
     _subjectController.clear();
     _salaryController.clear();
+     _addressController.clear();
   }
 
   Future<void> _deleteStaff(int index) async {
@@ -2858,7 +2861,19 @@ class _StaffManagementPageState extends State<StaffManagementPage> {
                           Icons.currency_rupee,
                         ),
                       ),
+                      const SizedBox(height: 12),
 
+TextFormField(
+  controller: _addressController,
+  maxLines: 3,
+  textCapitalization: TextCapitalization.sentences,
+  decoration: _inputDecoration(
+    'Staff Address',
+    Icons.home,
+  ),
+),
+
+const SizedBox(height: 18),
                       const SizedBox(height: 18),
 
                       SizedBox(
