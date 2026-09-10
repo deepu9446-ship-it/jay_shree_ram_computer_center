@@ -325,43 +325,45 @@ class _DashboardPageState extends State<DashboardPage> {
       icon: Icons.settings,
     ),
   ];
-
   void openFeature(DashboardItem item) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
+  Navigator.push(
+    context,
+    MaterialPageRoute(
       builder: (_) {
-  if (item.title == 'Students') {
-    return const StudentListPage();
-  }
+        if (item.title == 'Students') {
+          return const StudentListPage();
+        }
 
-  if (item.title == 'Admission') {
-    return const StudentProfilePage();
-  }
+        if (item.title == 'Admission') {
+          return const StudentProfilePage();
+        }
 
-   if (item.title == 'Biometric Attendance') {
-    return const AttendancePage();
-  }
-   return const FeesManagementPage();
-}if (item.title == 'Fees') {
-  return const FeesManagementPage();
-}
-if (item.title == 'Staff') {
-  return const StaffManagementPage();
-}
-if (item.title == 'Receipt Management') {
-  return const ReceiptManagementPage();
+        if (item.title == 'Biometric Attendance') {
+          return const AttendancePage();
+        }
+
+        if (item.title == 'Fees') {
+          return const FeesManagementPage();
+        }
+
+        if (item.title == 'Staff') {
+          return const StaffManagementPage();
+        }
+
+        if (item.title == 'Receipt Management') {
+          return const ReceiptManagementPage();
+        }
+
+        return FeaturePage(
+          title: item.title,
+          subtitle: item.subtitle,
+          icon: item.icon,
+        );
+      },
+    ),
+  );
 }
 
-  return FeaturePage(
-            title: item.title,
-            subtitle: item.subtitle,
-            icon: item.icon,
-          );
-        },
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
