@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'attendance_page.dart';
-
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
 void main() {
   runApp(const MyApp());
 }
@@ -25,6 +26,1175 @@ class MyApp extends StatelessWidget {
         ),
       ),
       home: const AdminLoginPage(),
+    );
+  }
+}
+class StudyMaterialManagementPage extends StatefulWidget {
+  const StudyMaterialManagementPage({super.key});
+
+  @override
+  State<StudyMaterialManagementPage> createState() =>
+      _StudyMaterialManagementPageState();
+}
+
+class _StudyMaterialManagementPageState
+    extends State<StudyMaterialManagementPage> {
+  static const String _storageKey = 'jsrc_study_material_records';
+
+  final _formKey = GlobalKey<FormState>();
+
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _courseController = TextEditingController();
+  final TextEditingController _descriptionController =
+      TextEditingController();
+  final TextEditingController _urlController = TextEditingController();
+
+  List<Map<String, dynamic>> _materials = [];
+
+  String _searchText = '';
+  String _selectedFilter = 'All';
+  String _selectedType = 'Video';
+
+  final List<String> _types = [
+    'Video',
+    'Audio',
+    'PDF',
+    'Online Link',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMaterials();
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _courseController.dispose();
+    _descriptionController.dispose();
+    _urlController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadMaterials() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString(_storageKey);
+
+    if (saved == null || saved.isEmpty) {
+      return;
+    }
+
+    try {
+      final decoded = jsonDecode(saved);
+
+      if (decoded is List) {
+        setState(() {
+          _materials = decoded
+              .map<Map<String, dynamic>>(
+                (item) => Map<String, dynamic>.from(item),
+              )
+              .toList();
+        });
+      }
+    } catch (_) {
+      // Ignore corrupted old data.
+    }
+  }
+
+  Future<void> _saveMaterials() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_storageKey, jsonEncode(_materials));
+  }
+
+  void _clearForm() {
+    _titleController.clear();
+    _courseController.clear();
+    _descriptionController.clear();
+    _urlController.clear();
+
+    setState(() {
+      _selectedType = 'Video';
+    });
+  }
+
+  Future<void> _saveRecord() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    final record = <String, dynamic>{
+      'id': DateTime.now().millisecondsSinceEpoch.toString(),
+      'title': _titleController.text.trim(),
+      'course': _courseController.text.trim(),
+      'description': _descriptionController.text.trim(),
+      'url': _urlController.text.trim(),
+      'type': _selectedType,
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+
+    setState(() {
+      _materials.insert(0, record);
+    });
+
+    await _saveMaterials();
+    _clearForm();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Study Material saved successfully'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  Future<void> _editRecord(Map<String, dynamic> material) async {
+    _titleController.text = material['title']?.toString() ?? '';
+    _courseController.text = material['course']?.toString() ?? '';
+    _descriptionController.text =
+        material['description']?.toString() ?? '';
+    _urlController.text = material['url']?.toString() ?? '';
+
+    final oldType = material['type']?.toString() ?? 'Video';
+
+    setState(() {
+      _selectedType = _types.contains(oldType) ? oldType : 'Video';
+    });
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: _buildEditSheet(material),
+        );
+      },
+    );
+  }
+
+  Widget _buildEditSheet(Map<String, dynamic> material) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(24),
+        ),
+      ),
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
+      child: SingleChildScrollView(
+        child: Form(
+          key: GlobalKey<FormState>(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 45,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade400,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Edit Study Material',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 18),
+
+              _inputField(
+                controller: _titleController,
+                label: 'Material Title',
+                icon: Icons.title,
+              ),
+
+              const SizedBox(height: 12),
+
+              _inputField(
+                controller: _courseController,
+                label: 'Course Name',
+                icon: Icons.school,
+              ),
+
+              const SizedBox(height: 12),
+
+              _typeDropdown(),
+
+              const SizedBox(height: 12),
+
+              _inputField(
+                controller: _urlController,
+                label: _urlLabel(),
+                icon: Icons.link,
+                keyboardType: TextInputType.url,
+              ),
+
+              const SizedBox(height: 12),
+
+              _inputField(
+                controller: _descriptionController,
+                label: 'Description',
+                icon: Icons.description,
+                maxLines: 3,
+                required: false,
+              ),
+
+              const SizedBox(height: 20),
+
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    if (_titleController.text.trim().isEmpty ||
+                        _courseController.text.trim().isEmpty ||
+                        _urlController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please fill all required fields'),
+                        ),
+                      );
+                      return;
+                    }
+
+                    final index = _materials.indexWhere(
+                      (item) => item['id'].toString() == material['id'].toString(),
+                    );
+
+                    if (index != -1) {
+                      setState(() {
+                        _materials[index] = {
+                          ..._materials[index],
+                          'title': _titleController.text.trim(),
+                          'course': _courseController.text.trim(),
+                          'description':
+                              _descriptionController.text.trim(),
+                          'url': _urlController.text.trim(),
+                          'type': _selectedType,
+                        };
+                      });
+
+                      await _saveMaterials();
+                    }
+
+                    if (!mounted) return;
+
+                    Navigator.pop(context);
+                    _clearForm();
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Study Material updated successfully',
+                        ),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.save),
+                  label: const Text(
+                    'Update Record',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deleteRecord(int index) async {
+    final material = _filteredMaterials[index];
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete Material?'),
+          content: Text(
+            'Are you sure you want to delete "${material['title']}"?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    final actualIndex = _materials.indexWhere(
+      (item) => item['id'].toString() == material['id'].toString(),
+    );
+
+    if (actualIndex != -1) {
+      setState(() {
+        _materials.removeAt(actualIndex);
+      });
+
+      await _saveMaterials();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Material deleted'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _openMaterial(Map<String, dynamic> material) async {
+    final urlText = material['url']?.toString().trim() ?? '';
+
+    if (urlText.isEmpty) {
+      return;
+    }
+
+    Uri? uri;
+
+    try {
+      uri = Uri.parse(urlText);
+    } catch (_) {
+      uri = null;
+    }
+
+    if (uri == null ||
+        !(uri.scheme == 'http' || uri.scheme == 'https')) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Please enter a valid http/https link',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!launched && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Unable to open this link'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Unable to open this link'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _copyLink(Map<String, dynamic> material) async {
+    final url = material['url']?.toString() ?? '';
+
+    if (url.isEmpty) {
+      return;
+    }
+
+    await Clipboard.setData(
+      ClipboardData(text: url),
+    );
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Link copied'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  List<Map<String, dynamic>> get _filteredMaterials {
+    return _materials.where((material) {
+      final title =
+          material['title']?.toString().toLowerCase() ?? '';
+      final course =
+          material['course']?.toString().toLowerCase() ?? '';
+      final type =
+          material['type']?.toString() ?? '';
+
+      final matchesSearch =
+          title.contains(_searchText.toLowerCase()) ||
+          course.contains(_searchText.toLowerCase());
+
+      final matchesFilter =
+          _selectedFilter == 'All' ||
+          type == _selectedFilter;
+
+      return matchesSearch && matchesFilter;
+    }).toList();
+  }
+
+  String _urlLabel() {
+    switch (_selectedType) {
+      case 'Video':
+        return 'Video URL / YouTube Link';
+      case 'Audio':
+        return 'Audio URL / MP3 Link';
+      case 'PDF':
+        return 'PDF URL';
+      default:
+        return 'Online Study URL';
+    }
+  }
+
+  IconData _typeIcon(String type) {
+    switch (type) {
+      case 'Video':
+        return Icons.play_circle_fill;
+      case 'Audio':
+        return Icons.headphones;
+      case 'PDF':
+        return Icons.picture_as_pdf;
+      default:
+        return Icons.language;
+    }
+  }
+
+  Color _typeColor(String type) {
+    switch (type) {
+      case 'Video':
+        return Colors.red;
+      case 'Audio':
+        return Colors.deepPurple;
+      case 'PDF':
+        return Colors.blue;
+      default:
+        return Colors.green;
+    }
+  }
+
+  String _typeHindi(String type) {
+    switch (type) {
+      case 'Video':
+        return 'वीडियो';
+      case 'Audio':
+        return 'ऑडियो';
+      case 'PDF':
+        return 'PDF नोट्स';
+      default:
+        return 'ऑनलाइन लिंक';
+    }
+  }
+
+  Widget _inputField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    TextInputType? keyboardType,
+    int maxLines = 1,
+    bool required = true,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      textCapitalization: TextCapitalization.sentences,
+      validator: required
+          ? (value) {
+              if (value == null || value.trim().isEmpty) {
+                return '$label is required';
+              }
+              return null;
+            }
+          : null,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon),
+        filled: true,
+        fillColor: Colors.orange.shade50,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: Colors.orange.shade100,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+            color: Colors.orange,
+            width: 2,
+          ),
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(
+    String label,
+    IconData icon,
+  ) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon),
+      filled: true,
+      fillColor: Colors.orange.shade50,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+    );
+  }
+
+  Widget _typeDropdown() {
+    return DropdownButtonFormField<String>(
+      initialValue: _selectedType,
+      decoration: _inputDecoration(
+        'Material Type',
+        Icons.category,
+      ),
+      items: _types.map((type) {
+        return DropdownMenuItem(
+          value: type,
+          child: Row(
+            children: [
+              Icon(
+                _typeIcon(type),
+                color: _typeColor(type),
+                size: 21,
+              ),
+              const SizedBox(width: 10),
+              Text('$type (${_typeHindi(type)})'),
+            ],
+          ),
+        );
+      }).toList(),
+      onChanged: (value) {
+        if (value == null) return;
+
+        setState(() {
+          _selectedType = value;
+        });
+      },
+    );
+  }
+
+  Widget _buildAddMaterialForm() {
+    return Card(
+      elevation: 4,
+      margin: const EdgeInsets.all(12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(
+                    Icons.add_circle,
+                    color: Colors.orange,
+                    size: 28,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Add Study Material',
+                    style: TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              _inputField(
+                controller: _titleController,
+                label: 'Material Title',
+                icon: Icons.title,
+              ),
+
+              const SizedBox(height: 12),
+
+              _inputField(
+                controller: _courseController,
+                label: 'Course Name',
+                icon: Icons.school,
+              ),
+
+              const SizedBox(height: 12),
+
+              _typeDropdown(),
+
+              const SizedBox(height: 12),
+
+              _inputField(
+                controller: _urlController,
+                label: _urlLabel(),
+                icon: Icons.link,
+                keyboardType: TextInputType.url,
+              ),
+
+              const SizedBox(height: 12),
+
+              _inputField(
+                controller: _descriptionController,
+                label: 'Description',
+                icon: Icons.description,
+                maxLines: 3,
+                required: false,
+              ),
+
+              const SizedBox(height: 18),
+
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _saveRecord,
+                  icon: const Icon(Icons.save),
+                  label: const Text(
+                    'Save Record',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 15,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchAndFilter() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+      child: Column(
+        children: [
+          TextField(
+            onChanged: (value) {
+              setState(() {
+                _searchText = value;
+              });
+            },
+            decoration: InputDecoration(
+              hintText: 'Search material or course...',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _searchText.isNotEmpty
+                  ? IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _searchText = '';
+                        });
+                      },
+                      icon: const Icon(Icons.clear),
+                    )
+                  : null,
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                'All',
+                'Video',
+                'Audio',
+                'PDF',
+                'Online Link',
+              ].map((filter) {
+                final selected = _selectedFilter == filter;
+
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ChoiceChip(
+                    label: Text(
+                      filter == 'All'
+                          ? 'All'
+                          : '$filter (${_materials.where((m) => m['type'] == filter).length})',
+                    ),
+                    selected: selected,
+                    selectedColor: Colors.orange,
+                    labelStyle: TextStyle(
+                      color: selected
+                          ? Colors.white
+                          : Colors.black87,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    onSelected: (_) {
+                      setState(() {
+                        _selectedFilter = filter;
+                      });
+                    },
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMaterialCard(
+    Map<String, dynamic> material,
+    int index,
+  ) {
+    final title = material['title']?.toString() ?? '';
+    final course = material['course']?.toString() ?? '';
+    final type = material['type']?.toString() ?? 'Online Link';
+    final description =
+        material['description']?.toString() ?? '';
+    final url = material['url']?.toString() ?? '';
+
+    final typeColor = _typeColor(type);
+
+    return Card(
+      elevation: 3,
+      margin: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: typeColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    _typeIcon(type),
+                    color: typeColor,
+                    size: 30,
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+
+                      const SizedBox(height: 5),
+
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.school,
+                            size: 16,
+                            color: Colors.orange,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              course,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.grey.shade700,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                PopupMenuButton<String>(
+                  onSelected: (value) {
+                    if (value == 'edit') {
+                      _editRecord(material);
+                    } else if (value == 'delete') {
+                      _deleteRecord(index);
+                    }
+                  },
+                  itemBuilder: (context) => const [
+                    PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit, color: Colors.orange),
+                          SizedBox(width: 8),
+                          Text('Edit'),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Delete'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 10),
+
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 6,
+              ),
+              decoration: BoxDecoration(
+                color: typeColor.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                '$type • ${_typeHindi(type)}',
+                style: TextStyle(
+                  color: typeColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+
+            if (description.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Text(
+                description,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.grey.shade700,
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 10),
+
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                url,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.grey.shade700,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _openMaterial(material),
+                    icon: Icon(
+                      type == 'Video'
+                          ? Icons.play_arrow
+                          : type == 'Audio'
+                              ? Icons.headphones
+                              : type == 'PDF'
+                                  ? Icons.picture_as_pdf
+                                  : Icons.open_in_new,
+                    ),
+                    label: Text(
+                      type == 'Video'
+                          ? 'Watch Video'
+                          : type == 'Audio'
+                              ? 'Play Audio'
+                              : type == 'PDF'
+                                  ? 'Open PDF'
+                                  : 'Open Link',
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: typeColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 8),
+
+                IconButton(
+                  tooltip: 'Copy Link',
+                  onPressed: () => _copyLink(material),
+                  icon: const Icon(Icons.copy),
+                  color: Colors.orange,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Padding(
+      padding: const EdgeInsets.all(30),
+      child: Column(
+        children: [
+          Icon(
+            Icons.library_books_outlined,
+            size: 80,
+            color: Colors.orange.shade300,
+          ),
+          const SizedBox(height: 15),
+          const Text(
+            'No Study Material Found',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Add Video, Audio, PDF या Online Study Link',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.grey.shade600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = _filteredMaterials;
+
+    return Scaffold(
+      backgroundColor: Colors.orange.shade50,
+
+      appBar: AppBar(
+        title: const Text(
+          'Study Material',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
+        elevation: 3,
+      ),
+
+      body: SafeArea(
+        child: ListView(
+          children: [
+            Container(
+              margin: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.orange.shade700,
+                    Colors.orange.shade400,
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.orange.withValues(alpha: 0.25),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: const Row(
+                children: [
+                  Icon(
+                    Icons.menu_book,
+                    color: Colors.white,
+                    size: 42,
+                  ),
+                  SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'JSRC Digital Study Material',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 19,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Video • Audio • PDF • Online Learning',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            _buildAddMaterialForm(),
+
+            const SizedBox(height: 6),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+              ),
+              child: Text(
+                'Saved Materials: ${_materials.length}',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            _buildSearchAndFilter(),
+
+            if (filtered.isEmpty)
+              _buildEmptyState()
+            else
+              ...filtered.asMap().entries.map(
+                (entry) {
+                  return _buildMaterialCard(
+                    entry.value,
+                    entry.key,
+                  );
+                },
+              ),
+
+            const SizedBox(height: 30),
+          ],
+        ),
+      ),
+
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
+        onPressed: () {
+          _clearForm();
+
+          Scrollable.ensureVisible(
+            _formKey.currentContext!,
+            duration: const Duration(milliseconds: 400),
+          );
+        },
+        icon: const Icon(Icons.add),
+        label: const Text('Add Material'),
+      ),
     );
   }
 }
@@ -345,14 +1515,19 @@ class _DashboardPageState extends State<DashboardPage> {
         if (item.title == 'Fees') {
           return const FeesManagementPage();
         }
+       if (item.title == 'Staff') {
+  return const StaffManagementPage();
+}
 
-        if (item.title == 'Staff') {
-          return const StaffManagementPage();
-        }
+if (item.title == 'Study Material') {
+  return const StudyMaterialManagementPage();
+}
 
-        if (item.title == 'Receipt Management') {
-          return const ReceiptManagementPage();
-        }
+if (item.title == 'Receipt Management') {
+  return const ReceiptManagementPage();
+}
+
+        
 
         return FeaturePage(
           title: item.title,
