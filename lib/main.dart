@@ -1418,6 +1418,18 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
   }
 }
 
+class DashboardItem {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+
+  const DashboardItem({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+  });
+}
+
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
@@ -1515,23 +1527,26 @@ class _DashboardPageState extends State<DashboardPage> {
         if (item.title == 'Fees') {
           return const FeesManagementPage();
         }
-       if (item.title == 'Staff') {
-  return const StaffManagementPage();
-}
 
-if (item.title == 'Study Material') {
-  return const StudyMaterialManagementPage();
-}
+        if (item.title == 'Staff') {
+          return const StaffManagementPage();
+        }
 
-if (item.title == 'Receipt Management') {
-  return const ReceiptManagementPage();
-}
+        if (item.title == 'Study Material') {
+          return const StudyMaterialManagementPage();
+        }
 
-if (item.title == 'Settings') {
-  return const SettingsPage();
-}
+        if (item.title == 'Receipt Management') {
+          return const ReceiptManagementPage();
+        }
 
-        
+        if (item.title == 'Reports') {
+          return const ReportsManagementPage();
+        }
+
+        if (item.title == 'Settings') {
+          return const SettingsPage();
+        }
 
         return FeaturePage(
           title: item.title,
@@ -1542,8 +1557,6 @@ if (item.title == 'Settings') {
     ),
   );
 }
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -2027,23 +2040,190 @@ if (item.title == 'Settings') {
   }
 }
 
-class DashboardItem {
+class FeaturePage extends StatelessWidget {
   final String title;
   final String subtitle;
   final IconData icon;
 
-  const DashboardItem({
+  const FeaturePage({
+    super.key,
     required this.title,
     required this.subtitle,
     required this.icon,
   });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
+        title: Text(title),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Colors.orange, Color(0xFFFF8F00)],
+              ),
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Column(
+              children: [
+                CircleAvatar(
+                  radius: 42,
+                  backgroundColor: Colors.white,
+                  child: Icon(icon, size: 44, color: Colors.orange),
+                ),
+                const SizedBox(height: 15),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 25,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(subtitle, style: const TextStyle(color: Colors.white70)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          _actionCard(
+            context,
+            'Add New',
+            'Create a new record',
+            Icons.add_circle,
+          ),
+          _actionCard(context, 'View List', 'View all records', Icons.list_alt),
+          _actionCard(context, 'Search', 'Search records', Icons.search),
+          _actionCard(context, 'Reports', 'Generate reports', Icons.analytics),
+        ],
+      ),
+    );
+  }
+
+  Widget _actionCard(
+    BuildContext context,
+    String title,
+    String subtitle,
+    IconData actionIcon,
+  ) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+        leading: CircleAvatar(
+          backgroundColor: Colors.orange.withValues(alpha: 0.12),
+          child: Icon(actionIcon, color: Colors.orange),
+        ),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(subtitle),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+        onTap: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('$title option opened'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        },
+      ),
+    );
+  }
 }
+
+
+class Student {
+  String studentName;
+  String fatherName;
+  String motherName;
+  String mobile;
+  String email;
+  String dob;
+  String gender;
+  String address;
+  String city;
+  String state;
+  String? signaturePath;
+  String pincode;
+  String course;
+  String admissionNo;
+  String rollNo;
+  String? photoPath;
+
+  Student({
+    required this.studentName,
+    required this.fatherName,
+    required this.motherName,
+    required this.mobile,
+    required this.email,
+    required this.dob,
+    required this.gender,
+    required this.address,
+    required this.city,
+    required this.state,
+    this.signaturePath,
+    required this.pincode,
+    required this.course,
+    required this.admissionNo,
+    required this.rollNo,
+    this.photoPath,
+  });
+}
+
+final List<Student> students = [];
+
+
+
+
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
 }
+
+class StudentProfilePage extends StatefulWidget {
+  final Student? student;
+  final int? index;
+
+  const StudentProfilePage({super.key, this.student, this.index});
+
+  @override
+  State<StudentProfilePage> createState() => _StudentProfilePageState();
+}
+
+class StudentListPage extends StatefulWidget {
+  const StudentListPage({super.key});
+
+  @override
+  State<StudentListPage> createState()
+  => _StudentListPageState();
+}
+
+class FeesManagementPage extends StatefulWidget {
+  const FeesManagementPage({super.key});
+
+  @override
+  State<FeesManagementPage> createState() => _FeesManagementPageState();
+}
+
+class ReceiptManagementPage extends StatefulWidget {
+  const ReceiptManagementPage({super.key});
+
+  @override
+  State<ReceiptManagementPage> createState() =>
+      _ReceiptManagementPageState();
+}
+
+
 
 class _SettingsPageState extends State<SettingsPage> {
   bool notifications = true;
@@ -2342,154 +2522,8 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 }
-class FeaturePage extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final IconData icon;
 
-  const FeaturePage({
-    super.key,
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-  });
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.orange,
-        foregroundColor: Colors.white,
-        title: Text(title),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Colors.orange, Color(0xFFFF8F00)],
-              ),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Column(
-              children: [
-                CircleAvatar(
-                  radius: 42,
-                  backgroundColor: Colors.white,
-                  child: Icon(icon, size: 44, color: Colors.orange),
-                ),
-                const SizedBox(height: 15),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 25,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(subtitle, style: const TextStyle(color: Colors.white70)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          _actionCard(
-            context,
-            'Add New',
-            'Create a new record',
-            Icons.add_circle,
-          ),
-          _actionCard(context, 'View List', 'View all records', Icons.list_alt),
-          _actionCard(context, 'Search', 'Search records', Icons.search),
-          _actionCard(context, 'Reports', 'Generate reports', Icons.analytics),
-        ],
-      ),
-    );
-  }
-
-  Widget _actionCard(
-    BuildContext context,
-    String title,
-    String subtitle,
-    IconData actionIcon,
-  ) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-        leading: CircleAvatar(
-          backgroundColor: Colors.orange.withValues(alpha: 0.12),
-          child: Icon(actionIcon, color: Colors.orange),
-        ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(subtitle),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('$title option opened'),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class Student {
-  String studentName;
-  String fatherName;
-  String motherName;
-  String mobile;
-  String email;
-  String dob;
-  String gender;
-  String address;
-  String city;
-  String state;
-  String? signaturePath;
-  String pincode;
-  String course;
-  String admissionNo;
-  String rollNo;
-  String? photoPath;
-
-  Student({
-    required this.studentName,
-    required this.fatherName,
-    required this.motherName,
-    required this.mobile,
-    required this.email,
-    required this.dob,
-    required this.gender,
-    required this.address,
-    required this.city,
-    required this.state,
-    this.signaturePath,
-    required this.pincode,
-    required this.course,
-    required this.admissionNo,
-    required this.rollNo,
-    this.photoPath,
-  });
-}
-
-final List<Student> students = [];
-
-class StudentProfilePage extends StatefulWidget {
-  final Student? student;
-  final int? index;
-
-  const StudentProfilePage({super.key, this.student, this.index});
-
-  @override
-  State<StudentProfilePage> createState() => _StudentProfilePageState();
-}
 
 class _StudentProfilePageState extends State<StudentProfilePage> {
   final formKey = GlobalKey<FormState>();
@@ -2965,13 +2999,7 @@ Future<void> pickSignature() async {
   }
 }
 
-class StudentListPage extends StatefulWidget {
-  const StudentListPage({super.key});
 
-  @override
-  State<StudentListPage> createState()
-  => _StudentListPageState();
-}
 
 class _StudentListPageState extends
  State<StudentListPage> {
@@ -3296,261 +3324,8 @@ class _StudentListPageState extends
     );
   }
 }
-class ReceiptManagementPage extends StatefulWidget {
-  const ReceiptManagementPage({super.key});
 
-  @override
-  State<ReceiptManagementPage> createState() =>
-      _ReceiptManagementPageState();
-}
 
-class _ReceiptManagementPageState
-    extends State<ReceiptManagementPage> {
-  final studentController = TextEditingController();
-  final courseController = TextEditingController();
-  final amountController = TextEditingController();
-
-  DateTime selectedDate = DateTime.now();
-
-  final List<Map<String, String>> receipts = [];
-
-  void saveReceipt() {
-    if (studentController.text.trim().isEmpty ||
-        courseController.text.trim().isEmpty ||
-        amountController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill all details'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    final receiptNumber =
-        'RCP-${(receipts.length + 1).toString().padLeft(3, '0')}';
-
-    setState(() {
-      receipts.add({
-        'receipt': receiptNumber,
-        'student': studentController.text.trim(),
-        'course': courseController.text.trim(),
-        'amount': amountController.text.trim(),
-        'date':
-            '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
-      });
-    });
-
-    studentController.clear();
-    courseController.clear();
-    amountController.clear();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$receiptNumber saved successfully'),
-        backgroundColor: Colors.green,
-      ),
-    );
-  }
-
-  Future<void> selectDate() async {
-    final date = await showDatePicker(
-      context: context,
-      initialDate: selectedDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
-    );
-
-    if (date != null) {
-      setState(() {
-        selectedDate = date;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Receipt Management'),
-        backgroundColor: Colors.orange,
-        foregroundColor: Colors.white,
-      ),
-
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Card(
-            elevation: 4,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  const Icon(
-                    Icons.receipt_long,
-                    size: 60,
-                    color: Colors.orange,
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  const Text(
-                    'Create New Receipt',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  TextField(
-                    controller: studentController,
-                    decoration: const InputDecoration(
-                      labelText: 'Student Name',
-                      prefixIcon: Icon(Icons.person),
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  TextField(
-                    controller: courseController,
-                    decoration: const InputDecoration(
-                      labelText: 'Course',
-                      prefixIcon: Icon(Icons.school),
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  TextField(
-                    controller: amountController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Amount',
-                      prefixIcon: Icon(Icons.currency_rupee),
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  ListTile(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      side: const BorderSide(color: Colors.grey),
-                    ),
-                    leading: const Icon(
-                      Icons.calendar_month,
-                      color: Colors.orange,
-                    ),
-                    title: const Text('Receipt Date'),
-                    subtitle: Text(
-                      '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
-                    ),
-                    onTap: selectDate,
-                  ),
-
-                  const SizedBox(height: 15),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton.icon(
-                      onPressed: saveReceipt,
-                      icon: const Icon(Icons.save),
-                      label: const Text(
-                        'SAVE RECEIPT',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange,
-                        foregroundColor: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          const Text(
-            'Receipt History',
-            style: TextStyle(
-              fontSize: 21,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          if (receipts.isEmpty)
-            const Card(
-              child: Padding(
-                padding: EdgeInsets.all(20),
-                child: Center(
-                  child: Text('No receipts created yet'),
-                ),
-              ),
-            ),
-
-          ...receipts.map(
-            (receipt) => Card(
-              child: ListTile(
-                leading: const CircleAvatar(
-                  backgroundColor: Colors.orange,
-                  child: Icon(
-                    Icons.receipt,
-                    color: Colors.white,
-                  ),
-                ),
-                title: Text(
-                  receipt['receipt']!,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                subtitle: Text(
-                  '${receipt['student']}\n'
-                  '${receipt['course']} • ${receipt['date']}',
-                ),
-                trailing: Text(
-                  '₹${receipt['amount']}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    studentController.dispose();
-    courseController.dispose();
-    amountController.dispose();
-    super.dispose();
-  }
-}
-
-class FeesManagementPage extends StatefulWidget {
-  const FeesManagementPage({super.key});
-
-  @override
-  State<FeesManagementPage> createState() => _FeesManagementPageState();
-}
 
 class _FeesManagementPageState extends State<FeesManagementPage> {
   final List<Map<String, dynamic>> records = [];
@@ -3945,6 +3720,965 @@ class _FeesManagementPageState extends State<FeesManagementPage> {
     super.dispose();
   }
 }
+
+
+
+class _ReceiptManagementPageState
+    extends State<ReceiptManagementPage> {
+  final studentController = TextEditingController();
+  final courseController = TextEditingController();
+  final amountController = TextEditingController();
+
+  DateTime selectedDate = DateTime.now();
+
+  final List<Map<String, String>> receipts = [];
+
+  void saveReceipt() {
+    if (studentController.text.trim().isEmpty ||
+        courseController.text.trim().isEmpty ||
+        amountController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill all details'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final receiptNumber =
+        'RCP-${(receipts.length + 1).toString().padLeft(3, '0')}';
+
+    setState(() {
+      receipts.add({
+        'receipt': receiptNumber,
+        'student': studentController.text.trim(),
+        'course': courseController.text.trim(),
+        'amount': amountController.text.trim(),
+        'date':
+            '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+      });
+    });
+
+    studentController.clear();
+    courseController.clear();
+    amountController.clear();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$receiptNumber saved successfully'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  Future<void> selectDate() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+
+    if (date != null) {
+      setState(() {
+        selectedDate = date;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Receipt Management'),
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
+      ),
+
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Card(
+            elevation: 4,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  const Icon(
+                    Icons.receipt_long,
+                    size: 60,
+                    color: Colors.orange,
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  const Text(
+                    'Create New Receipt',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  TextField(
+                    controller: studentController,
+                    decoration: const InputDecoration(
+                      labelText: 'Student Name',
+                      prefixIcon: Icon(Icons.person),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  TextField(
+                    controller: courseController,
+                    decoration: const InputDecoration(
+                      labelText: 'Course',
+                      prefixIcon: Icon(Icons.school),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  TextField(
+                    controller: amountController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Amount',
+                      prefixIcon: Icon(Icons.currency_rupee),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: const BorderSide(color: Colors.grey),
+                    ),
+                    leading: const Icon(
+                      Icons.calendar_month,
+                      color: Colors.orange,
+                    ),
+                    title: const Text('Receipt Date'),
+                    subtitle: Text(
+                      '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                    ),
+                    onTap: selectDate,
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton.icon(
+                      onPressed: saveReceipt,
+                      icon: const Icon(Icons.save),
+                      label: const Text(
+                        'SAVE RECEIPT',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          const Text(
+            'Receipt History',
+            style: TextStyle(
+              fontSize: 21,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          if (receipts.isEmpty)
+            const Card(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: Center(
+                  child: Text('No receipts created yet'),
+                ),
+              ),
+            ),
+
+          ...receipts.map(
+            (receipt) => Card(
+              child: ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Colors.orange,
+                  child: Icon(
+                    Icons.receipt,
+                    color: Colors.white,
+                  ),
+                ),
+                title: Text(
+                  receipt['receipt']!,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: Text(
+                  '${receipt['student']}\n'
+                  '${receipt['course']} • ${receipt['date']}',
+                ),
+                trailing: Text(
+                  '₹${receipt['amount']}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    studentController.dispose();
+    courseController.dispose();
+    amountController.dispose();
+    super.dispose();
+  }
+}
+
+class ReportsManagementPage extends StatefulWidget {
+  const ReportsManagementPage({super.key});
+
+  @override
+  State<ReportsManagementPage> createState() =>
+      _ReportsManagementPageState();
+}
+
+class _ReportsManagementPageState
+    extends State<ReportsManagementPage> {
+  static const String _feesKey = 'jsrc_fee_records';
+  static const String _staffKey = 'jsrc_staff_records';
+
+  bool _loading = true;
+
+  int _studentCount = 0;
+  int _attendanceCount = 0;
+  int _staffCount = 0;
+  int _courseCount = 0;
+
+  double _totalFees = 0;
+  double _totalPaid = 0;
+  double _totalPending = 0;
+
+  List<Map<String, dynamic>> _attendanceRecords = [];
+  List<Map<String, dynamic>> _feeRecords = [];
+  List<Map<String, dynamic>> _staffRecords = [];
+  List<String> _courses = [];
+
+  String _selectedReport = 'Overview';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReports();
+  }
+
+  Future<void> _loadReports() async {
+    setState(() {
+      _loading = true;
+    });
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // ---------------- STUDENTS ----------------
+      _studentCount = students.length;
+
+      final courseSet = <String>{};
+
+      for (final student in students) {
+        final course = student.course.trim();
+        if (course.isNotEmpty) {
+          courseSet.add(course);
+        }
+      }
+
+      _courses = courseSet.toList()..sort();
+      _courseCount = _courses.length;
+
+      // ---------------- FEES ----------------
+      _feeRecords = [];
+
+      final feeData = prefs.getString(_feesKey);
+
+      if (feeData != null && feeData.isNotEmpty) {
+        try {
+          final decoded = jsonDecode(feeData);
+
+          if (decoded is List) {
+            _feeRecords = decoded
+                .map(
+                  (e) => Map<String, dynamic>.from(e as Map),
+                )
+                .toList();
+          }
+        } catch (_) {
+          _feeRecords = [];
+        }
+      }
+
+      _totalFees = 0;
+      _totalPaid = 0;
+
+      for (final student in _feeRecords) {
+        final total =
+            double.tryParse('${student['totalFees'] ?? 0}') ?? 0;
+
+        _totalFees += total;
+
+        final installments = student['installments'];
+
+        if (installments is List) {
+          for (final item in installments) {
+            if (item is Map) {
+              _totalPaid +=
+                  double.tryParse(
+                        '${item['paidAmount'] ?? 0}',
+                      ) ??
+                      0;
+            }
+          }
+        }
+      }
+
+      _totalPending = _totalFees - _totalPaid;
+
+      if (_totalPending < 0) {
+        _totalPending = 0;
+      }
+
+      // ---------------- STAFF ----------------
+      _staffRecords = [];
+
+      final staffData = prefs.getString(_staffKey);
+
+      if (staffData != null && staffData.isNotEmpty) {
+        try {
+          final decoded = jsonDecode(staffData);
+
+          if (decoded is List) {
+            _staffRecords = decoded
+                .map(
+                  (e) => Map<String, dynamic>.from(e as Map),
+                )
+                .toList();
+          }
+        } catch (_) {
+          _staffRecords = [];
+        }
+      }
+
+      _staffCount = _staffRecords.length;
+
+      // ---------------- ATTENDANCE ----------------
+      _attendanceRecords = [];
+
+      final keys = prefs.getKeys();
+
+      for (final key in keys) {
+        if (!key.startsWith('attendance_')) {
+          continue;
+        }
+
+        // केवल main boolean attendance key को record मानें।
+        // _name, _course, _date आदि को अलग record नहीं मानना है।
+        if (prefs.get(key) is! bool) {
+          continue;
+        }
+
+        if (prefs.getBool(key) != true) {
+          continue;
+        }
+
+        final name =
+            prefs.getString('${key}_name') ?? '';
+
+        final studentId =
+            prefs.getString('${key}_studentId') ?? '';
+
+        final course =
+            prefs.getString('${key}_course') ?? '';
+
+        final date =
+            prefs.getString('${key}_date') ?? '';
+
+        final time =
+            prefs.getString('${key}_time') ?? '';
+
+        final verification =
+            prefs.getString('${key}_verification') ??
+                'Face + Eye Blink Verified';
+
+        _attendanceRecords.add({
+          'key': key,
+          'name': name,
+          'studentId': studentId,
+          'course': course,
+          'date': date,
+          'time': time,
+          'verification': verification,
+        });
+      }
+
+      _attendanceRecords.sort((a, b) {
+        final aTime = '${a['date']} ${a['time']}';
+        final bTime = '${b['date']} ${b['time']}';
+        return bTime.compareTo(aTime);
+      });
+    } catch (_) {
+      // Safe fallback
+    }
+
+    if (mounted) {
+      setState(() {
+        _loading = false;
+      });
+    }
+  }
+
+  String _money(double value) {
+    return '₹${value.toStringAsFixed(2)}';
+  }
+
+  Widget _statCard({
+    required String title,
+    required String value,
+    required IconData icon,
+  }) {
+    return Card(
+      elevation: 3,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: Colors.orange.shade100,
+              child: Icon(
+                icon,
+                color: Colors.orange.shade800,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionTitle(String title, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(
+        top: 18,
+        bottom: 10,
+      ),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            color: Colors.orange.shade800,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _overview() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 8),
+
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          childAspectRatio: 1.65,
+          children: [
+            _statCard(
+              title: 'Total Students',
+              value: '$_studentCount',
+              icon: Icons.people,
+            ),
+            _statCard(
+              title: 'Attendance Records',
+              value: '$_attendanceCount',
+              icon: Icons.fingerprint,
+            ),
+            _statCard(
+              title: 'Staff',
+              value: '$_staffCount',
+              icon: Icons.badge,
+            ),
+            _statCard(
+              title: 'Courses',
+              value: '$_courseCount',
+              icon: Icons.school,
+            ),
+          ],
+        ),
+
+        _sectionTitle(
+          'Fees Summary',
+          Icons.account_balance_wallet,
+        ),
+
+        Card(
+          elevation: 3,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                _feeRow(
+                  'Total Fees',
+                  _money(_totalFees),
+                ),
+                const Divider(),
+                _feeRow(
+                  'Total Paid',
+                  _money(_totalPaid),
+                ),
+                const Divider(),
+                _feeRow(
+                  'Pending Fees',
+                  _money(_totalPending),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        _sectionTitle(
+          'Course Summary',
+          Icons.menu_book,
+        ),
+
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: _courses.isEmpty
+                ? const Text(
+                    'अभी कोई course data उपलब्ध नहीं है।',
+                  )
+                : Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _courses
+                        .map(
+                          (course) => Chip(
+                            avatar: const Icon(
+                              Icons.school,
+                              size: 18,
+                            ),
+                            label: Text(course),
+                          ),
+                        )
+                        .toList(),
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _feeRow(String title, String value) {
+    return Row(
+      mainAxisAlignment:
+          MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 17,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _attendanceReport() {
+    if (_attendanceRecords.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Center(
+            child: Text(
+              'अभी कोई biometric attendance record नहीं मिला।',
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: _attendanceRecords.map((record) {
+        return Card(
+          margin: const EdgeInsets.only(bottom: 10),
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: Colors.green.shade100,
+              child: const Icon(
+                Icons.verified,
+                color: Colors.green,
+              ),
+            ),
+            title: Text(
+              record['name'].toString().isEmpty
+                  ? 'Student'
+                  : record['name'].toString(),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            subtitle: Text(
+              'ID: ${record['studentId']}\n'
+              'Course: ${record['course']}\n'
+              'Date: ${record['date']}   '
+              'Time: ${record['time']}\n'
+              '✓ ${record['verification']}',
+            ),
+            isThreeLine: true,
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _feesReport() {
+    if (_feeRecords.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Center(
+            child: Text(
+              'अभी कोई fees record नहीं मिला।',
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: _feeRecords.map((student) {
+        final total =
+            double.tryParse(
+                  '${student['totalFees'] ?? 0}',
+                ) ??
+                0;
+
+        double paid = 0;
+
+        final installments =
+            student['installments'];
+
+        if (installments is List) {
+          for (final item in installments) {
+            if (item is Map) {
+              paid +=
+                  double.tryParse(
+                        '${item['paidAmount'] ?? 0}',
+                      ) ??
+                      0;
+            }
+          }
+        }
+
+        final pending = total - paid;
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 10),
+          child: ListTile(
+            leading: const CircleAvatar(
+              child: Icon(Icons.currency_rupee),
+            ),
+            title: Text(
+              '${student['studentName'] ?? 'Student'}',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            subtitle: Text(
+              'ID: ${student['studentId'] ?? ''}\n'
+              'Course: ${student['course'] ?? ''}\n'
+              'Total: ${_money(total)}\n'
+              'Paid: ${_money(paid)}\n'
+              'Pending: ${_money(pending < 0 ? 0 : pending)}',
+            ),
+            isThreeLine: true,
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _studentsReport() {
+    if (students.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Center(
+            child: Text(
+              'अभी कोई student data उपलब्ध नहीं है।',
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: students.map((student) {
+        return Card(
+          margin: const EdgeInsets.only(bottom: 10),
+          child: ListTile(
+            leading: CircleAvatar(
+              child: Text(
+                student.studentName.isNotEmpty
+                    ? student.studentName[0].toUpperCase()
+                    : 'S',
+              ),
+            ),
+            title: Text(
+              student.studentName,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            subtitle: Text(
+              'Admission No: ${student.admissionNo}\n'
+              'Roll No: ${student.rollNo}\n'
+              'Mobile: ${student.mobile}\n'
+              'Course: ${student.course}',
+            ),
+            isThreeLine: true,
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _staffReport() {
+    if (_staffRecords.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Center(
+            child: Text(
+              'अभी कोई staff record नहीं मिला।',
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: _staffRecords.map((staff) {
+        final name =
+            staff['name'] ??
+                staff['staffName'] ??
+                'Staff';
+
+        final id =
+            staff['staffId'] ??
+                staff['id'] ??
+                '';
+
+        final designation =
+            staff['designation'] ?? '';
+
+        final subject =
+            staff['subject'] ?? '';
+
+        final mobile =
+            staff['mobile'] ?? '';
+
+        return Card(
+          margin: const EdgeInsets.only(bottom: 10),
+          child: ListTile(
+            leading: const CircleAvatar(
+              child: Icon(Icons.badge),
+            ),
+            title: Text(
+              name.toString(),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            subtitle: Text(
+              'Staff ID: $id\n'
+              'Designation: $designation\n'
+              'Subject: $subject\n'
+              'Mobile: $mobile',
+            ),
+            isThreeLine: true,
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _selectedReportWidget() {
+    switch (_selectedReport) {
+      case 'Students':
+        return _studentsReport();
+
+      case 'Attendance':
+        return _attendanceReport();
+
+      case 'Fees':
+        return _feesReport();
+
+      case 'Staff':
+        return _staffReport();
+
+      default:
+        return _overview();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Reports'),
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            tooltip: 'Refresh Reports',
+            onPressed: _loading ? null : _loadReports,
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
+      ),
+      body: _loading
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
+          : RefreshIndicator(
+              onRefresh: _loadReports,
+              child: SingleChildScrollView(
+                physics:
+                    const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.stretch,
+                  children: [
+                    Card(
+                      elevation: 3,
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: DropdownButtonFormField<String>(
+                          value: _selectedReport,
+                          decoration:
+                              const InputDecoration(
+                            labelText: 'Report Type',
+                            prefixIcon:
+                                Icon(Icons.analytics),
+                            border:
+                                OutlineInputBorder(),
+                          ),
+                          items: const [
+                            'Overview',
+                            'Students',
+                            'Attendance',
+                            'Fees',
+                            'Staff',
+                          ].map((item) {
+                            return DropdownMenuItem<String>(
+                              value: item,
+                              child: Text(item),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            if (value == null) return;
+
+                            setState(() {
+                              _selectedReport = value;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    _selectedReportWidget(),
+                  ],
+                ),
+              ),
+            ),
+    );
+  }
+}
+
 class StaffManagementPage extends StatefulWidget {
   const StaffManagementPage({super.key});
 
