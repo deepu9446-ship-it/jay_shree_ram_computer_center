@@ -5,7 +5,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'attendance_page.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:flutter/services.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -29,6 +31,7 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
 class StudyMaterialManagementPage extends StatefulWidget {
   const StudyMaterialManagementPage({super.key});
 
@@ -45,8 +48,7 @@ class _StudyMaterialManagementPageState
 
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _courseController = TextEditingController();
-  final TextEditingController _descriptionController =
-      TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _urlController = TextEditingController();
 
   List<Map<String, dynamic>> _materials = [];
@@ -55,12 +57,7 @@ class _StudyMaterialManagementPageState
   String _selectedFilter = 'All';
   String _selectedType = 'Video';
 
-  final List<String> _types = [
-    'Video',
-    'Audio',
-    'PDF',
-    'Online Link',
-  ];
+  final List<String> _types = ['Video', 'Audio', 'PDF', 'Online Link'];
 
   @override
   void initState() {
@@ -153,8 +150,7 @@ class _StudyMaterialManagementPageState
   Future<void> _editRecord(Map<String, dynamic> material) async {
     _titleController.text = material['title']?.toString() ?? '';
     _courseController.text = material['course']?.toString() ?? '';
-    _descriptionController.text =
-        material['description']?.toString() ?? '';
+    _descriptionController.text = material['description']?.toString() ?? '';
     _urlController.text = material['url']?.toString() ?? '';
 
     final oldType = material['type']?.toString() ?? 'Video';
@@ -182,9 +178,7 @@ class _StudyMaterialManagementPageState
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(24),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 24),
       child: SingleChildScrollView(
@@ -206,10 +200,7 @@ class _StudyMaterialManagementPageState
               const SizedBox(height: 18),
               const Text(
                 'Edit Study Material',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 18),
 
@@ -268,7 +259,8 @@ class _StudyMaterialManagementPageState
                     }
 
                     final index = _materials.indexWhere(
-                      (item) => item['id'].toString() == material['id'].toString(),
+                      (item) =>
+                          item['id'].toString() == material['id'].toString(),
                     );
 
                     if (index != -1) {
@@ -277,8 +269,7 @@ class _StudyMaterialManagementPageState
                           ..._materials[index],
                           'title': _titleController.text.trim(),
                           'course': _courseController.text.trim(),
-                          'description':
-                              _descriptionController.text.trim(),
+                          'description': _descriptionController.text.trim(),
                           'url': _urlController.text.trim(),
                           'type': _selectedType,
                         };
@@ -294,9 +285,7 @@ class _StudyMaterialManagementPageState
 
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text(
-                          'Study Material updated successfully',
-                        ),
+                        content: Text('Study Material updated successfully'),
                         backgroundColor: Colors.green,
                       ),
                     );
@@ -304,9 +293,7 @@ class _StudyMaterialManagementPageState
                   icon: const Icon(Icons.save),
                   label: const Text(
                     'Update Record',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
@@ -395,15 +382,12 @@ class _StudyMaterialManagementPageState
       uri = null;
     }
 
-    if (uri == null ||
-        !(uri.scheme == 'http' || uri.scheme == 'https')) {
+    if (uri == null || !(uri.scheme == 'http' || uri.scheme == 'https')) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Please enter a valid http/https link',
-          ),
+          content: Text('Please enter a valid http/https link'),
           backgroundColor: Colors.red,
         ),
       );
@@ -443,9 +427,7 @@ class _StudyMaterialManagementPageState
       return;
     }
 
-    await Clipboard.setData(
-      ClipboardData(text: url),
-    );
+    await Clipboard.setData(ClipboardData(text: url));
 
     if (!mounted) return;
 
@@ -459,20 +441,15 @@ class _StudyMaterialManagementPageState
 
   List<Map<String, dynamic>> get _filteredMaterials {
     return _materials.where((material) {
-      final title =
-          material['title']?.toString().toLowerCase() ?? '';
-      final course =
-          material['course']?.toString().toLowerCase() ?? '';
-      final type =
-          material['type']?.toString() ?? '';
+      final title = material['title']?.toString().toLowerCase() ?? '';
+      final course = material['course']?.toString().toLowerCase() ?? '';
+      final type = material['type']?.toString() ?? '';
 
       final matchesSearch =
           title.contains(_searchText.toLowerCase()) ||
           course.contains(_searchText.toLowerCase());
 
-      final matchesFilter =
-          _selectedFilter == 'All' ||
-          type == _selectedFilter;
+      final matchesFilter = _selectedFilter == 'All' || type == _selectedFilter;
 
       return matchesSearch && matchesFilter;
     }).toList();
@@ -562,25 +539,17 @@ class _StudyMaterialManagementPageState
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: Colors.orange.shade100,
-          ),
+          borderSide: BorderSide(color: Colors.orange.shade100),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: Colors.orange,
-            width: 2,
-          ),
+          borderSide: const BorderSide(color: Colors.orange, width: 2),
         ),
       ),
     );
   }
 
-  InputDecoration _inputDecoration(
-    String label,
-    IconData icon,
-  ) {
+  InputDecoration _inputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
       prefixIcon: Icon(icon),
@@ -596,20 +565,13 @@ class _StudyMaterialManagementPageState
   Widget _typeDropdown() {
     return DropdownButtonFormField<String>(
       initialValue: _selectedType,
-      decoration: _inputDecoration(
-        'Material Type',
-        Icons.category,
-      ),
+      decoration: _inputDecoration('Material Type', Icons.category),
       items: _types.map((type) {
         return DropdownMenuItem(
           value: type,
           child: Row(
             children: [
-              Icon(
-                _typeIcon(type),
-                color: _typeColor(type),
-                size: 21,
-              ),
+              Icon(_typeIcon(type), color: _typeColor(type), size: 21),
               const SizedBox(width: 10),
               Text('$type (${_typeHindi(type)})'),
             ],
@@ -630,9 +592,7 @@ class _StudyMaterialManagementPageState
     return Card(
       elevation: 4,
       margin: const EdgeInsets.all(12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -642,18 +602,11 @@ class _StudyMaterialManagementPageState
             children: [
               const Row(
                 children: [
-                  Icon(
-                    Icons.add_circle,
-                    color: Colors.orange,
-                    size: 28,
-                  ),
+                  Icon(Icons.add_circle, color: Colors.orange, size: 28),
                   SizedBox(width: 8),
                   Text(
                     'Add Study Material',
-                    style: TextStyle(
-                      fontSize: 19,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -706,17 +659,12 @@ class _StudyMaterialManagementPageState
                   icon: const Icon(Icons.save),
                   label: const Text(
                     'Save Record',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 15,
-                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -768,13 +716,9 @@ class _StudyMaterialManagementPageState
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: [
-                'All',
-                'Video',
-                'Audio',
-                'PDF',
-                'Online Link',
-              ].map((filter) {
+              children: ['All', 'Video', 'Audio', 'PDF', 'Online Link'].map((
+                filter,
+              ) {
                 final selected = _selectedFilter == filter;
 
                 return Padding(
@@ -788,9 +732,7 @@ class _StudyMaterialManagementPageState
                     selected: selected,
                     selectedColor: Colors.orange,
                     labelStyle: TextStyle(
-                      color: selected
-                          ? Colors.white
-                          : Colors.black87,
+                      color: selected ? Colors.white : Colors.black87,
                       fontWeight: FontWeight.w600,
                     ),
                     onSelected: (_) {
@@ -808,15 +750,11 @@ class _StudyMaterialManagementPageState
     );
   }
 
-  Widget _buildMaterialCard(
-    Map<String, dynamic> material,
-    int index,
-  ) {
+  Widget _buildMaterialCard(Map<String, dynamic> material, int index) {
     final title = material['title']?.toString() ?? '';
     final course = material['course']?.toString() ?? '';
     final type = material['type']?.toString() ?? 'Online Link';
-    final description =
-        material['description']?.toString() ?? '';
+    final description = material['description']?.toString() ?? '';
     final url = material['url']?.toString() ?? '';
 
     final typeColor = _typeColor(type);
@@ -824,9 +762,7 @@ class _StudyMaterialManagementPageState
     return Card(
       elevation: 3,
       margin: const EdgeInsets.fromLTRB(12, 6, 12, 6),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(
@@ -842,19 +778,14 @@ class _StudyMaterialManagementPageState
                     color: typeColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Icon(
-                    _typeIcon(type),
-                    color: typeColor,
-                    size: 30,
-                  ),
+                  child: Icon(_typeIcon(type), color: typeColor, size: 30),
                 ),
 
                 const SizedBox(width: 12),
 
                 Expanded(
                   child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         title,
@@ -930,10 +861,7 @@ class _StudyMaterialManagementPageState
             const SizedBox(height: 10),
 
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 6,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: typeColor.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(20),
@@ -954,9 +882,7 @@ class _StudyMaterialManagementPageState
                 description,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Colors.grey.shade700,
-                ),
+                style: TextStyle(color: Colors.grey.shade700),
               ),
             ],
 
@@ -973,10 +899,7 @@ class _StudyMaterialManagementPageState
                 url,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Colors.grey.shade700,
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
               ),
             ),
 
@@ -991,26 +914,24 @@ class _StudyMaterialManagementPageState
                       type == 'Video'
                           ? Icons.play_arrow
                           : type == 'Audio'
-                              ? Icons.headphones
-                              : type == 'PDF'
-                                  ? Icons.picture_as_pdf
-                                  : Icons.open_in_new,
+                          ? Icons.headphones
+                          : type == 'PDF'
+                          ? Icons.picture_as_pdf
+                          : Icons.open_in_new,
                     ),
                     label: Text(
                       type == 'Video'
                           ? 'Watch Video'
                           : type == 'Audio'
-                              ? 'Play Audio'
-                              : type == 'PDF'
-                                  ? 'Open PDF'
-                                  : 'Open Link',
+                          ? 'Play Audio'
+                          : type == 'PDF'
+                          ? 'Open PDF'
+                          : 'Open Link',
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: typeColor,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -1047,18 +968,13 @@ class _StudyMaterialManagementPageState
           const SizedBox(height: 15),
           const Text(
             'No Study Material Found',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
             'Add Video, Audio, PDF या Online Study Link',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(color: Colors.grey.shade600),
           ),
         ],
       ),
@@ -1075,9 +991,7 @@ class _StudyMaterialManagementPageState
       appBar: AppBar(
         title: const Text(
           'Study Material',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         backgroundColor: Colors.orange,
@@ -1093,10 +1007,7 @@ class _StudyMaterialManagementPageState
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    Colors.orange.shade700,
-                    Colors.orange.shade400,
-                  ],
+                  colors: [Colors.orange.shade700, Colors.orange.shade400],
                 ),
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: [
@@ -1109,16 +1020,11 @@ class _StudyMaterialManagementPageState
               ),
               child: const Row(
                 children: [
-                  Icon(
-                    Icons.menu_book,
-                    color: Colors.white,
-                    size: 42,
-                  ),
+                  Icon(Icons.menu_book, color: Colors.white, size: 42),
                   SizedBox(width: 14),
                   Expanded(
                     child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'JSRC Digital Study Material',
@@ -1131,10 +1037,7 @@ class _StudyMaterialManagementPageState
                         SizedBox(height: 4),
                         Text(
                           'Video • Audio • PDF • Online Learning',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                          ),
+                          style: TextStyle(color: Colors.white, fontSize: 13),
                         ),
                       ],
                     ),
@@ -1148,9 +1051,7 @@ class _StudyMaterialManagementPageState
             const SizedBox(height: 6),
 
             Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 14,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
               child: Text(
                 'Saved Materials: ${_materials.length}',
                 style: const TextStyle(
@@ -1167,14 +1068,9 @@ class _StudyMaterialManagementPageState
             if (filtered.isEmpty)
               _buildEmptyState()
             else
-              ...filtered.asMap().entries.map(
-                (entry) {
-                  return _buildMaterialCard(
-                    entry.value,
-                    entry.key,
-                  );
-                },
-              ),
+              ...filtered.asMap().entries.map((entry) {
+                return _buildMaterialCard(entry.value, entry.key);
+              }),
 
             const SizedBox(height: 30),
           ],
@@ -1316,8 +1212,7 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
 
                         const SizedBox(height: 28),
 
-                        
-                         TextFormField(
+                        TextFormField(
                           controller: _usernameController,
                           textInputAction: TextInputAction.next,
                           decoration: InputDecoration(
@@ -1491,11 +1386,11 @@ class _DashboardPageState extends State<DashboardPage> {
       subtitle: 'Face + Eye Blink',
       icon: Icons.face_retouching_natural,
     ),
-   DashboardItem(
-  title: 'Receipt Management',
-  subtitle: 'Create & Manage Receipts',
-  icon: Icons.receipt_long,
-),
+    DashboardItem(
+      title: 'Receipt Management',
+      subtitle: 'Create & Manage Receipts',
+      icon: Icons.receipt_long,
+    ),
     DashboardItem(
       title: 'Reports',
       subtitle: 'View Reports',
@@ -1508,55 +1403,72 @@ class _DashboardPageState extends State<DashboardPage> {
     ),
   ];
   void openFeature(DashboardItem item) {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) {
-        if (item.title == 'Students') {
-          return const StudentListPage();
-        }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) {
+          if (item.title == 'Students') {
+            return const StudentListPage();
+          }
 
-        if (item.title == 'Admission') {
-          return const StudentProfilePage();
-        }
+          if (item.title == 'Admission') {
+            return const StudentProfilePage();
+          }
 
-        if (item.title == 'Biometric Attendance') {
-          return const AttendancePage();
-        }
+          if (item.title == 'Biometric Attendance') {
+            return const AttendancePage();
+          }
 
-        if (item.title == 'Fees') {
-          return const FeesManagementPage();
-        }
+          if (item.title == 'Fees') {
+            return const FeesManagementPage();
+          }
 
-        if (item.title == 'Staff') {
-          return const StaffManagementPage();
-        }
+          if (item.title == 'Staff') {
+            return const StaffManagementPage();
+          }
 
-        if (item.title == 'Study Material') {
-          return const StudyMaterialManagementPage();
-        }
+          if (item.title == 'Study Material') {
+            return const StudyMaterialManagementPage();
+          }
 
-        if (item.title == 'Receipt Management') {
-          return const ReceiptManagementPage();
-        }
+          if (item.title == 'Receipt Management') {
+            return const ReceiptManagementPage();
+          }
 
-        if (item.title == 'Reports') {
-          return const ReportsManagementPage();
-        }
+          if (item.title == 'Reports') {
+            return const ReportsManagementPage();
+          }
 
-        if (item.title == 'Settings') {
-          return const SettingsPage();
-        }
+          if (item.title == 'Settings') {
+            return const SettingsPage();
+          }
 
-        return FeaturePage(
-          title: item.title,
-          subtitle: item.subtitle,
-          icon: item.icon,
-        );
-      },
-    ),
-  );
-}
+          if (item.title == 'Courses') {
+            return const CoursesManagementPage();
+          }
+
+          if (item.title == 'Certificates') {
+            return const CertificatesManagementPage();
+          }
+
+          if (item.title == 'QR Scanner') {
+            return const QrScannerPage();
+          }
+
+          if (item.title == 'Location') {
+            return const CenterLocationPage();
+          }
+
+          return FeaturePage(
+            title: item.title,
+            subtitle: item.subtitle,
+            icon: item.icon,
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1566,15 +1478,15 @@ class _DashboardPageState extends State<DashboardPage> {
         backgroundColor: Colors.orange,
         foregroundColor: Colors.white,
         leading: Padding(
-  padding: const EdgeInsets.all(6.0),
-  child: ClipRRect(
-    borderRadius: BorderRadius.circular(10),
-    child: Image.asset(
-      'assets/icon/jay_shree_ram_logo.png',
-      fit: BoxFit.contain,
-    ),
-  ),
-),
+          padding: const EdgeInsets.all(6.0),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Image.asset(
+              'assets/icon/jay_shree_ram_logo.png',
+              fit: BoxFit.contain,
+            ),
+          ),
+        ),
         title: const Text(
           'Jay Shree Ram Computer Center',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
@@ -2139,7 +2051,6 @@ class FeaturePage extends StatelessWidget {
   }
 }
 
-
 class Student {
   String studentName;
   String fatherName;
@@ -2180,9 +2091,6 @@ class Student {
 
 final List<Student> students = [];
 
-
-
-
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
@@ -2204,8 +2112,7 @@ class StudentListPage extends StatefulWidget {
   const StudentListPage({super.key});
 
   @override
-  State<StudentListPage> createState()
-  => _StudentListPageState();
+  State<StudentListPage> createState() => _StudentListPageState();
 }
 
 class FeesManagementPage extends StatefulWidget {
@@ -2219,11 +2126,8 @@ class ReceiptManagementPage extends StatefulWidget {
   const ReceiptManagementPage({super.key});
 
   @override
-  State<ReceiptManagementPage> createState() =>
-      _ReceiptManagementPageState();
+  State<ReceiptManagementPage> createState() => _ReceiptManagementPageState();
 }
-
-
 
 class _SettingsPageState extends State<SettingsPage> {
   bool notifications = true;
@@ -2250,10 +2154,7 @@ class _SettingsPageState extends State<SettingsPage> {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [
-                  Colors.orange,
-                  Color(0xFFFF8F00),
-                ],
+                colors: [Colors.orange, Color(0xFFFF8F00)],
               ),
               borderRadius: BorderRadius.circular(20),
             ),
@@ -2262,11 +2163,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 CircleAvatar(
                   radius: 30,
                   backgroundColor: Colors.white,
-                  child: Icon(
-                    Icons.settings,
-                    color: Colors.orange,
-                    size: 32,
-                  ),
+                  child: Icon(Icons.settings, color: Colors.orange, size: 32),
                 ),
                 SizedBox(width: 16),
                 Expanded(
@@ -2284,10 +2181,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       SizedBox(height: 5),
                       Text(
                         'Jay Shree Ram Computer Center',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                        ),
+                        style: TextStyle(color: Colors.white, fontSize: 13),
                       ),
                     ],
                   ),
@@ -2354,9 +2248,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        value
-                            ? 'Dark Mode enabled'
-                            : 'Dark Mode disabled',
+                        value ? 'Dark Mode enabled' : 'Dark Mode disabled',
                       ),
                     ),
                   );
@@ -2375,25 +2267,19 @@ class _SettingsPageState extends State<SettingsPage> {
                 const ListTile(
                   leading: Icon(Icons.school),
                   title: Text('Center Name'),
-                  subtitle: Text(
-                    'Jay Shree Ram Computer Center',
-                  ),
+                  subtitle: Text('Jay Shree Ram Computer Center'),
                 ),
                 const Divider(height: 1),
                 const ListTile(
                   leading: Icon(Icons.location_on_outlined),
                   title: Text('Location'),
-                  subtitle: Text(
-                    'Chhindwara, Madhya Pradesh',
-                  ),
+                  subtitle: Text('Chhindwara, Madhya Pradesh'),
                 ),
                 const Divider(height: 1),
                 const ListTile(
                   leading: Icon(Icons.business),
                   title: Text('Computer Center'),
-                  subtitle: Text(
-                    'Computer Education & Training Center',
-                  ),
+                  subtitle: Text('Computer Education & Training Center'),
                 ),
               ],
             ),
@@ -2407,15 +2293,11 @@ class _SettingsPageState extends State<SettingsPage> {
             child: ListTile(
               leading: const Icon(Icons.backup),
               title: const Text('Backup Data'),
-              subtitle: const Text(
-                'Create a backup of application data',
-              ),
+              subtitle: const Text('Create a backup of application data'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Backup feature ready'),
-                  ),
+                  const SnackBar(content: Text('Backup feature ready')),
                 );
               },
             ),
@@ -2425,15 +2307,11 @@ class _SettingsPageState extends State<SettingsPage> {
             child: ListTile(
               leading: const Icon(Icons.restore),
               title: const Text('Restore Data'),
-              subtitle: const Text(
-                'Restore previously saved data',
-              ),
+              subtitle: const Text('Restore previously saved data'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Restore feature ready'),
-                  ),
+                  const SnackBar(content: Text('Restore feature ready')),
                 );
               },
             ),
@@ -2449,15 +2327,12 @@ class _SettingsPageState extends State<SettingsPage> {
                 ListTile(
                   leading: const Icon(Icons.info_outline),
                   title: const Text('About JSRC'),
-                  subtitle: const Text(
-                    'Jay Shree Ram Computer Center',
-                  ),
+                  subtitle: const Text('Jay Shree Ram Computer Center'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () {
                     showAboutDialog(
                       context: context,
-                      applicationName:
-                          'Jay Shree Ram Computer Center',
+                      applicationName: 'Jay Shree Ram Computer Center',
                       applicationVersion: '1.0.0',
                       applicationLegalese:
                           'Computer Education & Training Center',
@@ -2489,10 +2364,7 @@ class _SettingsPageState extends State<SettingsPage> {
               icon: const Icon(Icons.arrow_back),
               label: const Text(
                 'Back to Dashboard',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               onPressed: () {
                 Navigator.pop(context);
@@ -2508,22 +2380,14 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget _sectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.only(
-        left: 4,
-        bottom: 8,
-      ),
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
       child: Text(
         title,
-        style: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-        ),
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
       ),
     );
   }
 }
-
-
 
 class _StudentProfilePageState extends State<StudentProfilePage> {
   final formKey = GlobalKey<FormState>();
@@ -2544,23 +2408,21 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
   final rollNo = TextEditingController();
   String gender = 'Male';
 
-File? selectedPhoto;
-File? selectedSignature;
+  File? selectedPhoto;
+  File? selectedSignature;
 
-final ImagePicker _picker = ImagePicker();
+  final ImagePicker _picker = ImagePicker();
 
-Future<void> pickSignature() async {
-  final XFile? image = await _picker.pickImage(
-    source: ImageSource.gallery,
-  );
+  Future<void> pickSignature() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
 
-  if (image != null && mounted) {
-    setState(() {
-      selectedSignature = File(image.path);
-      signaturePath = image.path;
-    });
+    if (image != null && mounted) {
+      setState(() {
+        selectedSignature = File(image.path);
+        signaturePath = image.path;
+      });
+    }
   }
-}
 
   @override
   void initState() {
@@ -2999,10 +2861,7 @@ Future<void> pickSignature() async {
   }
 }
 
-
-
-class _StudentListPageState extends
- State<StudentListPage> {
+class _StudentListPageState extends State<StudentListPage> {
   String search = '';
 
   List<Student> get filteredStudents {
@@ -3076,6 +2935,7 @@ class _StudentListPageState extends
       },
     );
   }
+
   void viewStudent(Student student) {
     showModalBottomSheet(
       context: context,
@@ -3325,8 +3185,6 @@ class _StudentListPageState extends
   }
 }
 
-
-
 class _FeesManagementPageState extends State<FeesManagementPage> {
   final List<Map<String, dynamic>> records = [];
 
@@ -3350,19 +3208,14 @@ class _FeesManagementPageState extends State<FeesManagementPage> {
 
       setState(() {
         records.clear();
-        records.addAll(
-          List<Map<String, dynamic>>.from(decoded),
-        );
+        records.addAll(List<Map<String, dynamic>>.from(decoded));
       });
     }
   }
 
   Future<void> _saveRecords() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      'jsrc_fee_records',
-      jsonEncode(records),
-    );
+    await prefs.setString('jsrc_fee_records', jsonEncode(records));
   }
 
   void _addStudent() {
@@ -3376,11 +3229,9 @@ class _FeesManagementPageState extends State<FeesManagementPage> {
         course.isEmpty ||
         total == null ||
         total <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('सभी जानकारी सही भरें'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('सभी जानकारी सही भरें')));
       return;
     }
 
@@ -3405,8 +3256,7 @@ class _FeesManagementPageState extends State<FeesManagementPage> {
         'course': course,
         'totalFees': total,
         'installmentAmount': installment,
-        'admissionDate':
-            DateTime.now().toIso8601String(),
+        'admissionDate': DateTime.now().toIso8601String(),
         'installments': installments,
       });
     });
@@ -3419,27 +3269,20 @@ class _FeesManagementPageState extends State<FeesManagementPage> {
     totalController.clear();
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Student Fees Record Save हो गया'),
-      ),
+      const SnackBar(content: Text('Student Fees Record Save हो गया')),
     );
   }
 
   double _totalPaid(Map<String, dynamic> student) {
-    final list =
-        List<Map<String, dynamic>>.from(student['installments']);
+    final list = List<Map<String, dynamic>>.from(student['installments']);
 
     return list.fold<double>(
       0,
-      (sum, item) =>
-          sum + ((item['paidAmount'] ?? 0) as num).toDouble(),
+      (sum, item) => sum + ((item['paidAmount'] ?? 0) as num).toDouble(),
     );
   }
 
-  Future<void> _payInstallment(
-    Map<String, dynamic> student,
-    int index,
-  ) async {
+  Future<void> _payInstallment(Map<String, dynamic> student, int index) async {
     final amountController = TextEditingController();
     final receiptController = TextEditingController();
 
@@ -3480,8 +3323,7 @@ class _FeesManagementPageState extends State<FeesManagementPage> {
             ),
             FilledButton(
               onPressed: () {
-                final paid =
-                    double.tryParse(amountController.text.trim());
+                final paid = double.tryParse(amountController.text.trim());
 
                 if (paid == null || paid <= 0) {
                   return;
@@ -3492,12 +3334,12 @@ class _FeesManagementPageState extends State<FeesManagementPage> {
                         .toDouble();
 
                 setState(() {
-                  student['installments'][index]['paidAmount'] =
-                      paid;
-                  student['installments'][index]['status'] =
-                      paid >= installment ? 'Paid' : 'Partial';
-                  student['installments'][index]['paidDate'] =
-                      DateTime.now().toIso8601String();
+                  student['installments'][index]['paidAmount'] = paid;
+                  student['installments'][index]['status'] = paid >= installment
+                      ? 'Paid'
+                      : 'Partial';
+                  student['installments'][index]['paidDate'] = DateTime.now()
+                      .toIso8601String();
                   student['installments'][index]['receiptNo'] =
                       receiptController.text.trim();
                 });
@@ -3539,10 +3381,7 @@ class _FeesManagementPageState extends State<FeesManagementPage> {
                 children: [
                   const Text(
                     'Add Student Fees',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
 
@@ -3603,9 +3442,7 @@ class _FeesManagementPageState extends State<FeesManagementPage> {
             const Card(
               child: Padding(
                 padding: EdgeInsets.all(20),
-                child: Center(
-                  child: Text('अभी कोई Fees Record नहीं है'),
-                ),
+                child: Center(child: Text('अभी कोई Fees Record नहीं है')),
               ),
             ),
 
@@ -3613,8 +3450,7 @@ class _FeesManagementPageState extends State<FeesManagementPage> {
             final index = entry.key;
             final student = entry.value;
 
-            final total =
-                (student['totalFees'] as num).toDouble();
+            final total = (student['totalFees'] as num).toDouble();
             final paid = _totalPaid(student);
             final pending = total - paid;
 
@@ -3623,9 +3459,7 @@ class _FeesManagementPageState extends State<FeesManagementPage> {
               child: ExpansionTile(
                 title: Text(
                   student['studentName'] ?? '',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(
                   '${student['course']} • ${student['studentId']}',
@@ -3633,42 +3467,31 @@ class _FeesManagementPageState extends State<FeesManagementPage> {
                 children: [
                   ListTile(
                     title: const Text('Total Fees'),
-                    trailing: Text(
-                      '₹${total.toStringAsFixed(0)}',
-                    ),
+                    trailing: Text('₹${total.toStringAsFixed(0)}'),
                   ),
                   ListTile(
                     title: const Text('Total Paid'),
-                    trailing: Text(
-                      '₹${paid.toStringAsFixed(0)}',
-                    ),
+                    trailing: Text('₹${paid.toStringAsFixed(0)}'),
                   ),
                   ListTile(
                     title: const Text('Pending'),
-                    trailing: Text(
-                      '₹${pending.toStringAsFixed(0)}',
-                    ),
+                    trailing: Text('₹${pending.toStringAsFixed(0)}'),
                   ),
 
                   const Divider(),
 
                   ...List.generate(12, (monthIndex) {
-                    final installment =
-                        student['installments'][monthIndex];
+                    final installment = student['installments'][monthIndex];
 
-                    final amount =
-                        (installment['amount'] as num).toDouble();
+                    final amount = (installment['amount'] as num).toDouble();
 
-                    final paidAmount =
-                        (installment['paidAmount'] as num).toDouble();
+                    final paidAmount = (installment['paidAmount'] as num)
+                        .toDouble();
 
-                    final status =
-                        installment['status'] ?? 'Pending';
+                    final status = installment['status'] ?? 'Pending';
 
                     return ListTile(
-                      leading: CircleAvatar(
-                        child: Text('${monthIndex + 1}'),
-                      ),
+                      leading: CircleAvatar(child: Text('${monthIndex + 1}')),
                       title: Text(
                         '${installment['month']} - ₹${amount.toStringAsFixed(0)}',
                       ),
@@ -3676,20 +3499,14 @@ class _FeesManagementPageState extends State<FeesManagementPage> {
                         'Paid: ₹${paidAmount.toStringAsFixed(0)} • $status',
                       ),
                       trailing: status == 'Paid'
-                          ? const Icon(
-                              Icons.check_circle,
-                              color: Colors.green,
-                            )
+                          ? const Icon(Icons.check_circle, color: Colors.green)
                           : IconButton(
                               icon: const Icon(
                                 Icons.payment,
                                 color: Colors.orange,
                               ),
                               onPressed: () =>
-                                  _payInstallment(
-                                student,
-                                monthIndex,
-                              ),
+                                  _payInstallment(student, monthIndex),
                             ),
                     );
                   }),
@@ -3721,10 +3538,7 @@ class _FeesManagementPageState extends State<FeesManagementPage> {
   }
 }
 
-
-
-class _ReceiptManagementPageState
-    extends State<ReceiptManagementPage> {
+class _ReceiptManagementPageState extends State<ReceiptManagementPage> {
   final studentController = TextEditingController();
   final courseController = TextEditingController();
   final amountController = TextEditingController();
@@ -3815,10 +3629,7 @@ class _ReceiptManagementPageState
 
                   const Text(
                     'Create New Receipt',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
 
                   const SizedBox(height: 20),
@@ -3883,9 +3694,7 @@ class _ReceiptManagementPageState
                       icon: const Icon(Icons.save),
                       label: const Text(
                         'SAVE RECEIPT',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.orange,
@@ -3902,10 +3711,7 @@ class _ReceiptManagementPageState
 
           const Text(
             'Receipt History',
-            style: TextStyle(
-              fontSize: 21,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
           ),
 
           const SizedBox(height: 10),
@@ -3914,9 +3720,7 @@ class _ReceiptManagementPageState
             const Card(
               child: Padding(
                 padding: EdgeInsets.all(20),
-                child: Center(
-                  child: Text('No receipts created yet'),
-                ),
+                child: Center(child: Text('No receipts created yet')),
               ),
             ),
 
@@ -3925,16 +3729,11 @@ class _ReceiptManagementPageState
               child: ListTile(
                 leading: const CircleAvatar(
                   backgroundColor: Colors.orange,
-                  child: Icon(
-                    Icons.receipt,
-                    color: Colors.white,
-                  ),
+                  child: Icon(Icons.receipt, color: Colors.white),
                 ),
                 title: Text(
                   receipt['receipt']!,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(
                   '${receipt['student']}\n'
@@ -3968,19 +3767,17 @@ class ReportsManagementPage extends StatefulWidget {
   const ReportsManagementPage({super.key});
 
   @override
-  State<ReportsManagementPage> createState() =>
-      _ReportsManagementPageState();
+  State<ReportsManagementPage> createState() => _ReportsManagementPageState();
 }
 
-class _ReportsManagementPageState
-    extends State<ReportsManagementPage> {
+class _ReportsManagementPageState extends State<ReportsManagementPage> {
   static const String _feesKey = 'jsrc_fee_records';
   static const String _staffKey = 'jsrc_staff_records';
 
   bool _loading = true;
 
   int _studentCount = 0;
-  int _attendanceCount = 0;
+  final int _attendanceCount = 0;
   int _staffCount = 0;
   int _courseCount = 0;
 
@@ -4035,9 +3832,7 @@ class _ReportsManagementPageState
 
           if (decoded is List) {
             _feeRecords = decoded
-                .map(
-                  (e) => Map<String, dynamic>.from(e as Map),
-                )
+                .map((e) => Map<String, dynamic>.from(e as Map))
                 .toList();
           }
         } catch (_) {
@@ -4049,8 +3844,7 @@ class _ReportsManagementPageState
       _totalPaid = 0;
 
       for (final student in _feeRecords) {
-        final total =
-            double.tryParse('${student['totalFees'] ?? 0}') ?? 0;
+        final total = double.tryParse('${student['totalFees'] ?? 0}') ?? 0;
 
         _totalFees += total;
 
@@ -4059,11 +3853,7 @@ class _ReportsManagementPageState
         if (installments is List) {
           for (final item in installments) {
             if (item is Map) {
-              _totalPaid +=
-                  double.tryParse(
-                        '${item['paidAmount'] ?? 0}',
-                      ) ??
-                      0;
+              _totalPaid += double.tryParse('${item['paidAmount'] ?? 0}') ?? 0;
             }
           }
         }
@@ -4086,9 +3876,7 @@ class _ReportsManagementPageState
 
           if (decoded is List) {
             _staffRecords = decoded
-                .map(
-                  (e) => Map<String, dynamic>.from(e as Map),
-                )
+                .map((e) => Map<String, dynamic>.from(e as Map))
                 .toList();
           }
         } catch (_) {
@@ -4118,24 +3906,19 @@ class _ReportsManagementPageState
           continue;
         }
 
-        final name =
-            prefs.getString('${key}_name') ?? '';
+        final name = prefs.getString('${key}_name') ?? '';
 
-        final studentId =
-            prefs.getString('${key}_studentId') ?? '';
+        final studentId = prefs.getString('${key}_studentId') ?? '';
 
-        final course =
-            prefs.getString('${key}_course') ?? '';
+        final course = prefs.getString('${key}_course') ?? '';
 
-        final date =
-            prefs.getString('${key}_date') ?? '';
+        final date = prefs.getString('${key}_date') ?? '';
 
-        final time =
-            prefs.getString('${key}_time') ?? '';
+        final time = prefs.getString('${key}_time') ?? '';
 
         final verification =
             prefs.getString('${key}_verification') ??
-                'Face + Eye Blink Verified';
+            'Face + Eye Blink Verified';
 
         _attendanceRecords.add({
           'key': key,
@@ -4181,23 +3964,16 @@ class _ReportsManagementPageState
           children: [
             CircleAvatar(
               backgroundColor: Colors.orange.shade100,
-              child: Icon(
-                icon,
-                color: Colors.orange.shade800,
-              ),
+              child: Icon(icon, color: Colors.orange.shade800),
             ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey,
-                    ),
+                    style: const TextStyle(fontSize: 13, color: Colors.grey),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -4218,23 +3994,14 @@ class _ReportsManagementPageState
 
   Widget _sectionTitle(String title, IconData icon) {
     return Padding(
-      padding: const EdgeInsets.only(
-        top: 18,
-        bottom: 10,
-      ),
+      padding: const EdgeInsets.only(top: 18, bottom: 10),
       child: Row(
         children: [
-          Icon(
-            icon,
-            color: Colors.orange.shade800,
-          ),
+          Icon(icon, color: Colors.orange.shade800),
           const SizedBox(width: 8),
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -4265,11 +4032,7 @@ class _ReportsManagementPageState
               value: '$_attendanceCount',
               icon: Icons.fingerprint,
             ),
-            _statCard(
-              title: 'Staff',
-              value: '$_staffCount',
-              icon: Icons.badge,
-            ),
+            _statCard(title: 'Staff', value: '$_staffCount', icon: Icons.badge),
             _statCard(
               title: 'Courses',
               value: '$_courseCount',
@@ -4278,10 +4041,7 @@ class _ReportsManagementPageState
           ],
         ),
 
-        _sectionTitle(
-          'Fees Summary',
-          Icons.account_balance_wallet,
-        ),
+        _sectionTitle('Fees Summary', Icons.account_balance_wallet),
 
         Card(
           elevation: 3,
@@ -4289,47 +4049,30 @@ class _ReportsManagementPageState
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                _feeRow(
-                  'Total Fees',
-                  _money(_totalFees),
-                ),
+                _feeRow('Total Fees', _money(_totalFees)),
                 const Divider(),
-                _feeRow(
-                  'Total Paid',
-                  _money(_totalPaid),
-                ),
+                _feeRow('Total Paid', _money(_totalPaid)),
                 const Divider(),
-                _feeRow(
-                  'Pending Fees',
-                  _money(_totalPending),
-                ),
+                _feeRow('Pending Fees', _money(_totalPending)),
               ],
             ),
           ),
         ),
 
-        _sectionTitle(
-          'Course Summary',
-          Icons.menu_book,
-        ),
+        _sectionTitle('Course Summary', Icons.menu_book),
 
         Card(
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: _courses.isEmpty
-                ? const Text(
-                    'अभी कोई course data उपलब्ध नहीं है।',
-                  )
+                ? const Text('अभी कोई course data उपलब्ध नहीं है।')
                 : Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: _courses
                         .map(
                           (course) => Chip(
-                            avatar: const Icon(
-                              Icons.school,
-                              size: 18,
-                            ),
+                            avatar: const Icon(Icons.school, size: 18),
                             label: Text(course),
                           ),
                         )
@@ -4343,21 +4086,12 @@ class _ReportsManagementPageState
 
   Widget _feeRow(String title, String value) {
     return Row(
-      mainAxisAlignment:
-          MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
         Text(
           value,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 17,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
         ),
       ],
     );
@@ -4369,9 +4103,7 @@ class _ReportsManagementPageState
         child: Padding(
           padding: EdgeInsets.all(20),
           child: Center(
-            child: Text(
-              'अभी कोई biometric attendance record नहीं मिला।',
-            ),
+            child: Text('अभी कोई biometric attendance record नहीं मिला।'),
           ),
         ),
       );
@@ -4384,18 +4116,13 @@ class _ReportsManagementPageState
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: Colors.green.shade100,
-              child: const Icon(
-                Icons.verified,
-                color: Colors.green,
-              ),
+              child: const Icon(Icons.verified, color: Colors.green),
             ),
             title: Text(
               record['name'].toString().isEmpty
                   ? 'Student'
                   : record['name'].toString(),
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Text(
               'ID: ${record['studentId']}\n'
@@ -4416,36 +4143,23 @@ class _ReportsManagementPageState
       return const Card(
         child: Padding(
           padding: EdgeInsets.all(20),
-          child: Center(
-            child: Text(
-              'अभी कोई fees record नहीं मिला।',
-            ),
-          ),
+          child: Center(child: Text('अभी कोई fees record नहीं मिला।')),
         ),
       );
     }
 
     return Column(
       children: _feeRecords.map((student) {
-        final total =
-            double.tryParse(
-                  '${student['totalFees'] ?? 0}',
-                ) ??
-                0;
+        final total = double.tryParse('${student['totalFees'] ?? 0}') ?? 0;
 
         double paid = 0;
 
-        final installments =
-            student['installments'];
+        final installments = student['installments'];
 
         if (installments is List) {
           for (final item in installments) {
             if (item is Map) {
-              paid +=
-                  double.tryParse(
-                        '${item['paidAmount'] ?? 0}',
-                      ) ??
-                      0;
+              paid += double.tryParse('${item['paidAmount'] ?? 0}') ?? 0;
             }
           }
         }
@@ -4455,14 +4169,10 @@ class _ReportsManagementPageState
         return Card(
           margin: const EdgeInsets.only(bottom: 10),
           child: ListTile(
-            leading: const CircleAvatar(
-              child: Icon(Icons.currency_rupee),
-            ),
+            leading: const CircleAvatar(child: Icon(Icons.currency_rupee)),
             title: Text(
               '${student['studentName'] ?? 'Student'}',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Text(
               'ID: ${student['studentId'] ?? ''}\n'
@@ -4483,11 +4193,7 @@ class _ReportsManagementPageState
       return const Card(
         child: Padding(
           padding: EdgeInsets.all(20),
-          child: Center(
-            child: Text(
-              'अभी कोई student data उपलब्ध नहीं है।',
-            ),
-          ),
+          child: Center(child: Text('अभी कोई student data उपलब्ध नहीं है।')),
         ),
       );
     }
@@ -4506,9 +4212,7 @@ class _ReportsManagementPageState
             ),
             title: Text(
               student.studentName,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Text(
               'Admission No: ${student.admissionNo}\n'
@@ -4528,47 +4232,30 @@ class _ReportsManagementPageState
       return const Card(
         child: Padding(
           padding: EdgeInsets.all(20),
-          child: Center(
-            child: Text(
-              'अभी कोई staff record नहीं मिला।',
-            ),
-          ),
+          child: Center(child: Text('अभी कोई staff record नहीं मिला।')),
         ),
       );
     }
 
     return Column(
       children: _staffRecords.map((staff) {
-        final name =
-            staff['name'] ??
-                staff['staffName'] ??
-                'Staff';
+        final name = staff['name'] ?? staff['staffName'] ?? 'Staff';
 
-        final id =
-            staff['staffId'] ??
-                staff['id'] ??
-                '';
+        final id = staff['staffId'] ?? staff['id'] ?? '';
 
-        final designation =
-            staff['designation'] ?? '';
+        final designation = staff['designation'] ?? '';
 
-        final subject =
-            staff['subject'] ?? '';
+        final subject = staff['subject'] ?? '';
 
-        final mobile =
-            staff['mobile'] ?? '';
+        final mobile = staff['mobile'] ?? '';
 
         return Card(
           margin: const EdgeInsets.only(bottom: 10),
           child: ListTile(
-            leading: const CircleAvatar(
-              child: Icon(Icons.badge),
-            ),
+            leading: const CircleAvatar(child: Icon(Icons.badge)),
             title: Text(
               name.toString(),
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Text(
               'Staff ID: $id\n'
@@ -4618,45 +4305,39 @@ class _ReportsManagementPageState
         ],
       ),
       body: _loading
-          ? const Center(
-              child: CircularProgressIndicator(),
-            )
+          ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
               onRefresh: _loadReports,
               child: SingleChildScrollView(
-                physics:
-                    const AlwaysScrollableScrollPhysics(),
+                physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.stretch,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Card(
                       elevation: 3,
                       child: Padding(
                         padding: const EdgeInsets.all(12),
                         child: DropdownButtonFormField<String>(
-                          value: _selectedReport,
-                          decoration:
-                              const InputDecoration(
+                          initialValue: _selectedReport,
+                          decoration: const InputDecoration(
                             labelText: 'Report Type',
-                            prefixIcon:
-                                Icon(Icons.analytics),
-                            border:
-                                OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.analytics),
+                            border: OutlineInputBorder(),
                           ),
-                          items: const [
-                            'Overview',
-                            'Students',
-                            'Attendance',
-                            'Fees',
-                            'Staff',
-                          ].map((item) {
-                            return DropdownMenuItem<String>(
-                              value: item,
-                              child: Text(item),
-                            );
-                          }).toList(),
+                          items:
+                              const [
+                                'Overview',
+                                'Students',
+                                'Attendance',
+                                'Fees',
+                                'Staff',
+                              ].map((item) {
+                                return DropdownMenuItem<String>(
+                                  value: item,
+                                  child: Text(item),
+                                );
+                              }).toList(),
                           onChanged: (value) {
                             if (value == null) return;
 
@@ -4761,8 +4442,8 @@ class _StaffManagementPageState extends State<StaffManagementPage> {
       'mobile': _mobileController.text.trim(),
       'designation': _designationController.text.trim(),
       'subject': _subjectController.text.trim(),
-      'salary': _salaryController.text.trim(),            
-'address': _addressController.text.trim(),
+      'salary': _salaryController.text.trim(),
+      'address': _addressController.text.trim(),
       'joiningDate':
           '${DateTime.now().day.toString().padLeft(2, '0')}/'
           '${DateTime.now().month.toString().padLeft(2, '0')}/'
@@ -4794,7 +4475,7 @@ class _StaffManagementPageState extends State<StaffManagementPage> {
     _designationController.clear();
     _subjectController.clear();
     _salaryController.clear();
-     _addressController.clear();
+    _addressController.clear();
   }
 
   Future<void> _deleteStaff(int index) async {
@@ -4814,11 +4495,9 @@ class _StaffManagementPageState extends State<StaffManagementPage> {
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Staff Record Deleted'),
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Staff Record Deleted')));
   }
 
   Future<void> _toggleStatus(int index) async {
@@ -4832,9 +4511,7 @@ class _StaffManagementPageState extends State<StaffManagementPage> {
 
     setState(() {
       _staffList[actualIndex]['status'] =
-          _staffList[actualIndex]['status'] == 'Active'
-              ? 'Inactive'
-              : 'Active';
+          _staffList[actualIndex]['status'] == 'Active' ? 'Inactive' : 'Active';
     });
 
     await _saveStaffRecords();
@@ -4849,11 +4526,7 @@ class _StaffManagementPageState extends State<StaffManagementPage> {
             children: [
               const Icon(Icons.badge, color: Colors.orange),
               const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  staff['name']?.toString() ?? 'Staff',
-                ),
-              ),
+              Expanded(child: Text(staff['name']?.toString() ?? 'Staff')),
             ],
           ),
           content: SingleChildScrollView(
@@ -4890,13 +4563,9 @@ class _StaffManagementPageState extends State<StaffManagementPage> {
           children: [
             TextSpan(
               text: '$title: ',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            TextSpan(
-              text: value?.toString() ?? '-',
-            ),
+            TextSpan(text: value?.toString() ?? '-'),
           ],
         ),
       ),
@@ -4922,16 +4591,11 @@ class _StaffManagementPageState extends State<StaffManagementPage> {
     }).toList();
   }
 
-  InputDecoration _inputDecoration(
-    String label,
-    IconData icon,
-  ) {
+  InputDecoration _inputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
       prefixIcon: Icon(icon),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       filled: true,
     );
   }
@@ -4973,10 +4637,7 @@ class _StaffManagementPageState extends State<StaffManagementPage> {
                     children: [
                       const Row(
                         children: [
-                          Icon(
-                            Icons.person_add_alt_1,
-                            color: Colors.orange,
-                          ),
+                          Icon(Icons.person_add_alt_1, color: Colors.orange),
                           SizedBox(width: 8),
                           Text(
                             'Add New Staff',
@@ -5007,10 +4668,7 @@ class _StaffManagementPageState extends State<StaffManagementPage> {
 
                       TextFormField(
                         controller: _staffIdController,
-                        decoration: _inputDecoration(
-                          'Staff ID',
-                          Icons.badge,
-                        ),
+                        decoration: _inputDecoration('Staff ID', Icons.badge),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
                             return 'Staff ID required';
@@ -5045,10 +4703,7 @@ class _StaffManagementPageState extends State<StaffManagementPage> {
 
                       TextFormField(
                         controller: _designationController,
-                        decoration: _inputDecoration(
-                          'Designation',
-                          Icons.work,
-                        ),
+                        decoration: _inputDecoration('Designation', Icons.work),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
                             return 'Designation required';
@@ -5079,17 +4734,17 @@ class _StaffManagementPageState extends State<StaffManagementPage> {
                       ),
                       const SizedBox(height: 12),
 
-TextFormField(
-  controller: _addressController,
-  maxLines: 3,
-  textCapitalization: TextCapitalization.sentences,
-  decoration: _inputDecoration(
-    'Staff Address',
-    Icons.home,
-  ),
-),
+                      TextFormField(
+                        controller: _addressController,
+                        maxLines: 3,
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: _inputDecoration(
+                          'Staff Address',
+                          Icons.home,
+                        ),
+                      ),
 
-const SizedBox(height: 18),
+                      const SizedBox(height: 18),
                       const SizedBox(height: 18),
 
                       SizedBox(
@@ -5143,10 +4798,7 @@ const SizedBox(height: 18),
                 const Expanded(
                   child: Text(
                     'Staff Records',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                 ),
                 CircleAvatar(
@@ -5190,86 +4842,837 @@ const SizedBox(height: 18),
                 ),
               )
             else
-              ...List.generate(
-                _filteredStaff.length,
-                (index) {
-                  final staff = _filteredStaff[index];
-                  final isActive = staff['status'] == 'Active';
+              ...List.generate(_filteredStaff.length, (index) {
+                final staff = _filteredStaff[index];
+                final isActive = staff['status'] == 'Active';
 
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor:
-                            isActive ? Colors.orange : Colors.grey,
-                        child: const Icon(
-                          Icons.person,
-                          color: Colors.white,
-                        ),
-                      ),
-                      title: Text(
-                        staff['name']?.toString() ?? '',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      subtitle: Text(
-                        '${staff['staffId']} • '
-                        '${staff['designation']}\n'
-                        '${staff['mobile']}',
-                      ),
-                      isThreeLine: true,
-                      trailing: PopupMenuButton<String>(
-                        onSelected: (value) async {
-                          if (value == 'view') {
-                            _showStaffDetails(staff);
-                          } else if (value == 'status') {
-                            await _toggleStatus(index);
-                          } else if (value == 'delete') {
-                            await _deleteStaff(index);
-                          }
-                        },
-                        itemBuilder: (context) => [
-                          const PopupMenuItem(
-                            value: 'view',
-                            child: ListTile(
-                              leading: Icon(Icons.visibility),
-                              title: Text('View Profile'),
-                            ),
-                          ),
-                          PopupMenuItem(
-                            value: 'status',
-                            child: ListTile(
-                              leading: Icon(
-                                isActive
-                                    ? Icons.person_off
-                                    : Icons.person,
-                              ),
-                              title: Text(
-                                isActive
-                                    ? 'Set Inactive'
-                                    : 'Set Active',
-                              ),
-                            ),
-                          ),
-                          const PopupMenuItem(
-                            value: 'delete',
-                            child: ListTile(
-                              leading: Icon(
-                                Icons.delete,
-                                color: Colors.red,
-                              ),
-                              title: Text('Delete'),
-                            ),
-                          ),
-                        ],
-                      ),
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: isActive ? Colors.orange : Colors.grey,
+                      child: const Icon(Icons.person, color: Colors.white),
                     ),
-                  );
-                },
-              ),
+                    title: Text(
+                      staff['name']?.toString() ?? '',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      '${staff['staffId']} • '
+                      '${staff['designation']}\n'
+                      '${staff['mobile']}',
+                    ),
+                    isThreeLine: true,
+                    trailing: PopupMenuButton<String>(
+                      onSelected: (value) async {
+                        if (value == 'view') {
+                          _showStaffDetails(staff);
+                        } else if (value == 'status') {
+                          await _toggleStatus(index);
+                        } else if (value == 'delete') {
+                          await _deleteStaff(index);
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'view',
+                          child: ListTile(
+                            leading: Icon(Icons.visibility),
+                            title: Text('View Profile'),
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: 'status',
+                          child: ListTile(
+                            leading: Icon(
+                              isActive ? Icons.person_off : Icons.person,
+                            ),
+                            title: Text(
+                              isActive ? 'Set Inactive' : 'Set Active',
+                            ),
+                          ),
+                        ),
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: ListTile(
+                            leading: Icon(Icons.delete, color: Colors.red),
+                            title: Text('Delete'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
 
             const SizedBox(height: 80),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// =========================================================
+// COURSES MANAGEMENT
+// =========================================================
+
+class CoursesManagementPage extends StatefulWidget {
+  const CoursesManagementPage({super.key});
+
+  @override
+  State<CoursesManagementPage> createState() => _CoursesManagementPageState();
+}
+
+class _CoursesManagementPageState extends State<CoursesManagementPage> {
+  static const String _storageKey = 'jsrc_courses';
+
+  List<Map<String, dynamic>> _courses = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCourses();
+  }
+
+  Future<void> _loadCourses() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = prefs.getStringList(_storageKey) ?? [];
+
+    setState(() {
+      _courses = data
+          .map((e) => Map<String, dynamic>.from(jsonDecode(e)))
+          .toList();
+    });
+  }
+
+  Future<void> _saveCourses() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setStringList(
+      _storageKey,
+      _courses.map((e) => jsonEncode(e)).toList(),
+    );
+  }
+
+  Future<void> _showCourseDialog({int? index}) async {
+    final existing = index == null ? null : _courses[index];
+
+    final nameController = TextEditingController(text: existing?['name'] ?? '');
+    final durationController = TextEditingController(
+      text: existing?['duration'] ?? '',
+    );
+    final feeController = TextEditingController(text: existing?['fee'] ?? '');
+    final descriptionController = TextEditingController(
+      text: existing?['description'] ?? '',
+    );
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(index == null ? 'Add Course' : 'Edit Course'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Course Name',
+                    prefixIcon: Icon(Icons.menu_book),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: durationController,
+                  decoration: const InputDecoration(
+                    labelText: 'Duration',
+                    hintText: 'Example: 6 Months',
+                    prefixIcon: Icon(Icons.schedule),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: feeController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Course Fee',
+                    prefixIcon: Icon(Icons.currency_rupee),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: descriptionController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Description',
+                    prefixIcon: Icon(Icons.description),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            FilledButton.icon(
+              onPressed: () async {
+                if (nameController.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(this.context).showSnackBar(
+                    const SnackBar(content: Text('Course name required')),
+                  );
+                  return;
+                }
+
+                final course = {
+                  'name': nameController.text.trim(),
+                  'duration': durationController.text.trim(),
+                  'fee': feeController.text.trim(),
+                  'description': descriptionController.text.trim(),
+                };
+
+                setState(() {
+                  if (index == null) {
+                    _courses.add(course);
+                  } else {
+                    _courses[index] = course;
+                  }
+                });
+
+                await _saveCourses();
+
+                if (!mounted) return;
+    Navigator.pop(context);
+              },
+              icon: const Icon(Icons.save),
+              label: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteCourse(int index) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete Course'),
+          content: const Text('क्या आप इस course को delete करना चाहते हैं?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm == true) {
+      setState(() {
+        _courses.removeAt(index);
+      });
+
+      await _saveCourses();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Course Management'),
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showCourseDialog(),
+        icon: const Icon(Icons.add),
+        label: const Text('Add Course'),
+      ),
+      body: _courses.isEmpty
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.menu_book,
+                      size: 80,
+                      color: Colors.orange.shade300,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'No Courses Added',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Add your first course using the + button.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(12),
+              itemCount: _courses.length,
+              itemBuilder: (context, index) {
+                final course = _courses[index];
+
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.orange,
+                      child: const Icon(Icons.menu_book, color: Colors.white),
+                    ),
+                    title: Text(
+                      course['name'] ?? '',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Text(
+                        'Duration: ${course['duration'] ?? '-'}\n'
+                        'Fee: ₹${course['fee'] ?? '-'}\n'
+                        '${course['description'] ?? ''}',
+                      ),
+                    ),
+                    isThreeLine: true,
+                    trailing: PopupMenuButton<String>(
+                      onSelected: (value) {
+                        if (value == 'edit') {
+                          _showCourseDialog(index: index);
+                        } else if (value == 'delete') {
+                          _deleteCourse(index);
+                        }
+                      },
+                      itemBuilder: (context) => const [
+                        PopupMenuItem(
+                          value: 'edit',
+                          child: ListTile(
+                            leading: Icon(Icons.edit),
+                            title: Text('Edit'),
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: ListTile(
+                            leading: Icon(Icons.delete),
+                            title: Text('Delete'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+}
+
+// =========================================================
+// CERTIFICATE MANAGEMENT
+// =========================================================
+
+class CertificatesManagementPage extends StatefulWidget {
+  const CertificatesManagementPage({super.key});
+
+  @override
+  State<CertificatesManagementPage> createState() =>
+      _CertificatesManagementPageState();
+}
+
+class _CertificatesManagementPageState
+    extends State<CertificatesManagementPage> {
+  static const String _storageKey = 'jsrc_certificates';
+
+  List<Map<String, dynamic>> _certificates = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCertificates();
+  }
+
+  Future<void> _loadCertificates() async {
+    final prefs = await SharedPreferences.getInstance();
+    final data = prefs.getStringList(_storageKey) ?? [];
+
+    setState(() {
+      _certificates = data
+          .map((e) => Map<String, dynamic>.from(jsonDecode(e)))
+          .toList();
+    });
+  }
+
+  Future<void> _saveCertificates() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setStringList(
+      _storageKey,
+      _certificates.map((e) => jsonEncode(e)).toList(),
+    );
+  }
+
+  Future<void> _showCertificateDialog({int? index}) async {
+    final existing = index == null ? null : _certificates[index];
+
+    final studentController = TextEditingController(
+      text: existing?['student'] ?? '',
+    );
+    final courseController = TextEditingController(
+      text: existing?['course'] ?? '',
+    );
+    final numberController = TextEditingController(
+      text: existing?['number'] ?? '',
+    );
+    final dateController = TextEditingController(text: existing?['date'] ?? '');
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(index == null ? 'Add Certificate' : 'Edit Certificate'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: studentController,
+                  decoration: const InputDecoration(
+                    labelText: 'Student Name',
+                    prefixIcon: Icon(Icons.person),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: courseController,
+                  decoration: const InputDecoration(
+                    labelText: 'Course',
+                    prefixIcon: Icon(Icons.menu_book),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: numberController,
+                  decoration: const InputDecoration(
+                    labelText: 'Certificate Number',
+                    prefixIcon: Icon(Icons.confirmation_number),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: dateController,
+                  decoration: const InputDecoration(
+                    labelText: 'Issue Date',
+                    hintText: 'DD/MM/YYYY',
+                    prefixIcon: Icon(Icons.calendar_today),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            FilledButton.icon(
+              onPressed: () async {
+                if (studentController.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(this.context).showSnackBar(
+                    const SnackBar(content: Text('Student name required')),
+                  );
+                  return;
+                }
+
+                final certificate = {
+                  'student': studentController.text.trim(),
+                  'course': courseController.text.trim(),
+                  'number': numberController.text.trim(),
+                  'date': dateController.text.trim(),
+                };
+
+                setState(() {
+                  if (index == null) {
+                    _certificates.add(certificate);
+                  } else {
+                    _certificates[index] = certificate;
+                  }
+                });
+
+                await _saveCertificates();
+
+                if (!mounted) return;
+    Navigator.pop(context);
+              },
+              icon: const Icon(Icons.save),
+              label: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteCertificate(int index) async {
+    setState(() {
+      _certificates.removeAt(index);
+    });
+
+    await _saveCertificates();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Certificate Management'),
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showCertificateDialog(),
+        icon: const Icon(Icons.add),
+        label: const Text('Add Certificate'),
+      ),
+      body: _certificates.isEmpty
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.workspace_premium,
+                      size: 80,
+                      color: Colors.orange.shade300,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'No Certificates Added',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(12),
+              itemCount: _certificates.length,
+              itemBuilder: (context, index) {
+                final certificate = _certificates[index];
+
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.orange,
+                      child: const Icon(
+                        Icons.workspace_premium,
+                        color: Colors.white,
+                      ),
+                    ),
+                    title: Text(
+                      certificate['student'] ?? '',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      'Course: ${certificate['course'] ?? '-'}\n'
+                      'Certificate No.: ${certificate['number'] ?? '-'}\n'
+                      'Issue Date: ${certificate['date'] ?? '-'}',
+                    ),
+                    isThreeLine: true,
+                    trailing: PopupMenuButton<String>(
+                      onSelected: (value) {
+                        if (value == 'edit') {
+                          _showCertificateDialog(index: index);
+                        } else {
+                          _deleteCertificate(index);
+                        }
+                      },
+                      itemBuilder: (context) => const [
+                        PopupMenuItem(
+                          value: 'edit',
+                          child: ListTile(
+                            leading: Icon(Icons.edit),
+                            title: Text('Edit'),
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: ListTile(
+                            leading: Icon(Icons.delete),
+                            title: Text('Delete'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+}
+
+// =========================================================
+// QR SCANNER
+// =========================================================
+
+class QrScannerPage extends StatefulWidget {
+  const QrScannerPage({super.key});
+
+  @override
+  State<QrScannerPage> createState() => _QrScannerPageState();
+}
+
+class _QrScannerPageState extends State<QrScannerPage> {
+  String _result = 'QR Code scan करें';
+  bool _scanned = false;
+
+  void _onDetect(BarcodeCapture capture) {
+    if (_scanned) return;
+
+    for (final barcode in capture.barcodes) {
+      final value = barcode.rawValue;
+
+      if (value != null && value.trim().isNotEmpty) {
+        setState(() {
+          _result = value;
+          _scanned = true;
+        });
+        break;
+      }
+    }
+  }
+
+  void _scanAgain() {
+    setState(() {
+      _result = 'QR Code scan करें';
+      _scanned = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('QR Scanner'),
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            flex: 6,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                MobileScanner(onDetect: _onDetect),
+                Center(
+                  child: Container(
+                    width: 250,
+                    height: 250,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.white, width: 3),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 20,
+                  left: 20,
+                  right: 20,
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      'QR Code को box के अंदर रखें',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  const Text(
+                    'Scan Result',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: SelectableText(
+                        _result,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ),
+                  FilledButton.icon(
+                    onPressed: _scanAgain,
+                    icon: const Icon(Icons.qr_code_scanner),
+                    label: const Text('Scan Again'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =========================================================
+// CENTER LOCATION
+// =========================================================
+
+class CenterLocationPage extends StatelessWidget {
+  const CenterLocationPage({super.key});
+
+  static const String address =
+      'Jay Shree Ram Computer Center, '
+      'Mansarovar Complex, 2nd Floor, '
+      'Prashant Medical, Chhindwara, Madhya Pradesh';
+
+  Future<void> _openMaps(BuildContext context) async {
+    final query = Uri.encodeComponent(address);
+
+    final uri = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=$query',
+    );
+
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Google Maps open नहीं हो पाया')),
+      );
+    }
+  }
+
+  Future<void> _callCenter(BuildContext context) async {
+    const phone = '';
+
+    if (phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Center mobile number अभी add नहीं किया गया है'),
+        ),
+      );
+      return;
+    }
+
+    final uri = Uri.parse('tel:$phone');
+
+    await launchUrl(uri);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Center Location'),
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            CircleAvatar(
+              radius: 55,
+              backgroundColor: Colors.orange.shade100,
+              child: Icon(
+                Icons.location_on,
+                size: 65,
+                color: Colors.orange.shade800,
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Jay Shree Ram Computer Center',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 23, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.location_on, color: Colors.orange.shade800),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        address,
+                        style: TextStyle(fontSize: 16, height: 1.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () => _openMaps(context),
+                icon: const Icon(Icons.map),
+                label: const Text('Open in Google Maps'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _callCenter(context),
+                icon: const Icon(Icons.call),
+                label: const Text('Call Center'),
+              ),
+            ),
           ],
         ),
       ),
