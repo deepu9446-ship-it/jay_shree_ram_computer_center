@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'attendance_page.dart';
@@ -1325,6 +1326,436 @@ class DashboardItem {
   });
 }
 
+
+
+class DocumentManagementPage extends StatefulWidget {
+  const DocumentManagementPage({super.key});
+
+  @override
+  State<DocumentManagementPage> createState() =>
+      _DocumentManagementPageState();
+}
+
+class _DocumentManagementPageState extends State<DocumentManagementPage> {
+  final List<Map<String, dynamic>> _documents = [];
+  final TextEditingController _searchController = TextEditingController();
+
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDocuments();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.trim().toLowerCase();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadDocuments() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getStringList('jsrc_documents') ?? [];
+
+    if (!mounted) return;
+
+    setState(() {
+      _documents.clear();
+
+      for (final item in saved) {
+        try {
+          final parts = item.split('|||');
+
+          if (parts.length >= 5) {
+            _documents.add({
+              'name': parts[0],
+              'path': parts[1],
+              'size': int.tryParse(parts[2]) ?? 0,
+              'extension': parts[3],
+              'date': parts[4],
+            });
+          }
+        } catch (_) {}
+      }
+    });
+  }
+
+  Future<void> _saveDocuments() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final data = _documents.map((doc) {
+      return [
+        doc['name'] ?? '',
+        doc['path'] ?? '',
+        doc['size'] ?? 0,
+        doc['extension'] ?? '',
+        doc['date'] ?? '',
+      ].join('|||');
+    }).toList();
+
+    await prefs.setStringList('jsrc_documents', data);
+  }
+
+  Future<void> _pickDocuments() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        type: FileType.custom,
+        allowedExtensions: [
+          'pdf',
+          'jpg',
+          'jpeg',
+          'png',
+          'doc',
+          'docx',
+          'xls',
+          'xlsx',
+        ],
+      );
+
+      if (!mounted || result == null) return;
+
+      final now = DateTime.now();
+      final date =
+          '${now.day.toString().padLeft(2, '0')}/'
+          '${now.month.toString().padLeft(2, '0')}/'
+          '${now.year}';
+
+      setState(() {
+        for (final file in result.files) {
+          _documents.insert(0, {
+            'name': file.name,
+            'path': file.path ?? '',
+            'size': file.size,
+            'extension': file.extension ?? '',
+            'date': date,
+          });
+        }
+      });
+
+      await _saveDocuments();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${result.files.length} document(s) added successfully',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Document error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _deleteDocument(int index) async {
+    final name = _documents[index]['name'] ?? 'Document';
+
+    setState(() {
+      _documents.removeAt(index);
+    });
+
+    await _saveDocuments();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$name deleted'),
+        backgroundColor: Colors.orange,
+      ),
+    );
+  }
+
+  String _formatSize(dynamic value) {
+    final size = value is int ? value : 0;
+
+    if (size < 1024) {
+      return '$size B';
+    }
+
+    if (size < 1024 * 1024) {
+      return '${(size / 1024).toStringAsFixed(1)} KB';
+    }
+
+    return '${(size / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+
+  IconData _documentIcon(String extension) {
+    switch (extension.toLowerCase()) {
+      case 'pdf':
+        return Icons.picture_as_pdf;
+      case 'doc':
+      case 'docx':
+        return Icons.description;
+      case 'xls':
+      case 'xlsx':
+        return Icons.table_chart;
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+        return Icons.image;
+      default:
+        return Icons.insert_drive_file;
+    }
+  }
+
+  List<Map<String, dynamic>> get _filteredDocuments {
+    if (_searchQuery.isEmpty) {
+      return _documents;
+    }
+
+    return _documents.where((doc) {
+      final name = (doc['name'] ?? '').toString().toLowerCase();
+      final extension =
+          (doc['extension'] ?? '').toString().toLowerCase();
+
+      return name.contains(_searchQuery) ||
+          extension.contains(_searchQuery);
+    }).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final documents = _filteredDocuments;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Document Management',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            onPressed: _pickDocuments,
+            icon: const Icon(Icons.upload_file),
+            tooltip: 'Add Document',
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _pickDocuments,
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text('Add Document'),
+      ),
+      body: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search documents...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        onPressed: () {
+                          _searchController.clear();
+                        },
+                        icon: const Icon(Icons.clear),
+                      )
+                    : null,
+                filled: true,
+                fillColor: Colors.orange.shade50,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+
+          Container(
+            margin: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 4,
+            ),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.orange.shade700,
+                  Colors.orange.shade400,
+                ],
+              ),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.folder_copy,
+                  color: Colors.white,
+                  size: 34,
+                ),
+                const SizedBox(width: 14),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Total Documents',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                      ),
+                    ),
+                    Text(
+                      '${_documents.length}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          Expanded(
+            child: documents.isEmpty
+                ? Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.folder_copy,
+                            size: 85,
+                            color: Colors.orange.shade300,
+                          ),
+                          const SizedBox(height: 18),
+                          Text(
+                            _documents.isEmpty
+                                ? 'No Documents Added'
+                                : 'No Documents Found',
+                            style: const TextStyle(
+                              fontSize: 21,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'PDF, Word, Excel और image documents यहाँ manage करें.',
+                            textAlign: TextAlign.center,
+                          ),
+                          if (_documents.isEmpty) ...[
+                            const SizedBox(height: 22),
+                            ElevatedButton.icon(
+                              onPressed: _pickDocuments,
+                              icon: const Icon(Icons.upload_file),
+                              label: const Text('Select Documents'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.orange,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 14,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(
+                      12,
+                      8,
+                      12,
+                      90,
+                    ),
+                    itemCount: documents.length,
+                    itemBuilder: (context, index) {
+                      final document = documents[index];
+
+                      final name =
+                          document['name'] ?? 'Document';
+
+                      final extension =
+                          (document['extension'] ?? '').toString();
+
+                      return Card(
+                        elevation: 3,
+                        margin: const EdgeInsets.only(bottom: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: ListTile(
+                          contentPadding:
+                              const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 7,
+                          ),
+                          leading: CircleAvatar(
+                            radius: 25,
+                            backgroundColor:
+                                Colors.orange.shade50,
+                            child: Icon(
+                              _documentIcon(extension),
+                              color: Colors.orange,
+                              size: 28,
+                            ),
+                          ),
+                          title: Text(
+                            name,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          subtitle: Text(
+                            '${extension.toUpperCase()} • '
+                            '${_formatSize(document['size'])}\n'
+                            'Added: ${document['date'] ?? '-'}',
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(
+                              Icons.delete_outline,
+                              color: Colors.red,
+                            ),
+                            onPressed: () {
+                              final actualIndex =
+                                  _documents.indexOf(document);
+
+                              if (actualIndex != -1) {
+                                _deleteDocument(actualIndex);
+                              }
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
@@ -1365,6 +1796,11 @@ class _DashboardPageState extends State<DashboardPage> {
       title: 'Study Material',
       subtitle: 'Notes & Materials',
       icon: Icons.library_books,
+    ),
+    DashboardItem(
+      title: 'Document',
+      subtitle: 'Document Management',
+      icon: Icons.folder_copy,
     ),
     DashboardItem(
       title: 'Certificates',
@@ -1434,6 +1870,10 @@ class _DashboardPageState extends State<DashboardPage> {
           if (item.title == 'Receipt Management') {
             return const ReceiptManagementPage();
           }
+
+        if (item.title == 'Document') {
+          return const DocumentManagementPage();
+        }
 
           if (item.title == 'Reports') {
             return const ReportsManagementPage();
