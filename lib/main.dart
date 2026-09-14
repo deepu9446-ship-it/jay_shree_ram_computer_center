@@ -8,6 +8,7 @@ import 'attendance_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 void main() {
   runApp(const MyApp());
@@ -1099,6 +1100,18 @@ class _StudyMaterialManagementPageState
 class AdminLoginPage extends StatefulWidget {
   const AdminLoginPage({super.key});
 
+  static const String adminUsernameKey = 'jsrc_admin_username';
+  static const String adminPasswordKey = 'jsrc_admin_password';
+
+  static const String loginAttemptsKey = 'jsrc_login_attempts';
+  static const String lockUntilKey = 'jsrc_login_lock_until';
+
+  static const String defaultAdminUsername = 'admin';
+  static const String defaultAdminPassword = '123456';
+
+  static const FlutterSecureStorage secureStorage =
+      FlutterSecureStorage();
+
   @override
   State<AdminLoginPage> createState() => _AdminLoginPageState();
 }
@@ -1111,9 +1124,6 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
   bool _obscurePassword = true;
   bool _loading = false;
 
-  static const String adminUsername = 'admin';
-  static const String adminPassword = '123456';
-
   @override
   void dispose() {
     _usernameController.dispose();
@@ -1121,37 +1131,159 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
     super.dispose();
   }
 
-  void _login() {
+  Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
       _loading = true;
     });
 
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (!mounted) return;
+    try {
+      final secure = AdminLoginPage.secureStorage;
+
+      final lockValue = await secure.read(
+        key: AdminLoginPage.lockUntilKey,
+      );
+
+      final lockUntil =
+          int.tryParse(lockValue ?? '') ?? 0;
+
+      if (lockUntil > DateTime.now().millisecondsSinceEpoch) {
+        final seconds = ((lockUntil -
+                    DateTime.now().millisecondsSinceEpoch) /
+                1000)
+            .ceil();
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Too many failed attempts. Try again in $seconds seconds.',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      String? savedUsername = await secure.read(
+        key: AdminLoginPage.adminUsernameKey,
+      );
+
+      String? savedPassword = await secure.read(
+        key: AdminLoginPage.adminPasswordKey,
+      );
+
+      // Automatic migration from old SharedPreferences storage.
+      if (savedUsername == null || savedPassword == null) {
+        final prefs = await SharedPreferences.getInstance();
+
+        savedUsername =
+            prefs.getString(AdminLoginPage.adminUsernameKey) ??
+                AdminLoginPage.defaultAdminUsername;
+
+        savedPassword =
+            prefs.getString(AdminLoginPage.adminPasswordKey) ??
+                AdminLoginPage.defaultAdminPassword;
+
+        await secure.write(
+          key: AdminLoginPage.adminUsernameKey,
+          value: savedUsername,
+        );
+
+        await secure.write(
+          key: AdminLoginPage.adminPasswordKey,
+          value: savedPassword,
+        );
+
+        await prefs.remove(AdminLoginPage.adminUsernameKey);
+        await prefs.remove(AdminLoginPage.adminPasswordKey);
+      }
 
       final username = _usernameController.text.trim();
       final password = _passwordController.text;
 
-      if (username == adminUsername && password == adminPassword) {
+      if (username == savedUsername && password == savedPassword) {
+        await secure.delete(key: AdminLoginPage.loginAttemptsKey);
+        await secure.delete(key: AdminLoginPage.lockUntilKey);
+
+        if (!mounted) return;
+
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const DashboardPage()),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invalid Admin ID or Password'),
-            backgroundColor: Colors.red,
+          MaterialPageRoute(
+            builder: (_) => const DashboardPage(),
           ),
         );
-      }
+      } else {
+        final attemptsValue = await secure.read(
+          key: AdminLoginPage.loginAttemptsKey,
+        );
 
-      setState(() {
-        _loading = false;
-      });
-    });
+        final attempts =
+            (int.tryParse(attemptsValue ?? '') ?? 0) + 1;
+
+        if (attempts >= 5) {
+          final lockTime =
+              DateTime.now()
+                  .add(const Duration(seconds: 30))
+                  .millisecondsSinceEpoch;
+
+          await secure.write(
+            key: AdminLoginPage.lockUntilKey,
+            value: lockTime.toString(),
+          );
+
+          await secure.delete(
+            key: AdminLoginPage.loginAttemptsKey,
+          );
+
+          if (!mounted) return;
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                '5 failed attempts. Login locked for 30 seconds.',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        } else {
+          await secure.write(
+            key: AdminLoginPage.loginAttemptsKey,
+            value: attempts.toString(),
+          );
+
+          if (!mounted) return;
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Invalid Admin ID or Password. '
+                'Attempt $attempts of 5.',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Secure login error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -1877,6 +2009,10 @@ class _DashboardPageState extends State<DashboardPage> {
 
           if (item.title == 'Reports') {
             return const ReportsManagementPage();
+          }
+
+          if (item.title == 'Admin Profile') {
+            return const AdminProfilePage();
           }
 
           if (item.title == 'Settings') {
@@ -6116,6 +6252,481 @@ class CenterLocationPage extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+
+class AdminProfilePage extends StatefulWidget {
+  const AdminProfilePage({super.key});
+
+  @override
+  State<AdminProfilePage> createState() => _AdminProfilePageState();
+}
+
+class _AdminProfilePageState extends State<AdminProfilePage> {
+  final _formKey = GlobalKey<FormState>();
+
+  final _currentPasswordController = TextEditingController();
+  final _usernameController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
+  bool _loading = true;
+  bool _saving = false;
+  bool _obscureCurrent = true;
+  bool _obscureNew = true;
+  bool _obscureConfirm = true;
+
+  String _currentUsername = 'admin';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAdminData();
+  }
+
+  @override
+  void dispose() {
+    _currentPasswordController.dispose();
+    _usernameController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadAdminData() async {
+    try {
+      final secure = AdminLoginPage.secureStorage;
+
+      String? username = await secure.read(
+        key: AdminLoginPage.adminUsernameKey,
+      );
+
+      // Migration fallback for an older installation.
+      if (username == null) {
+        final prefs = await SharedPreferences.getInstance();
+
+        username =
+            prefs.getString(AdminLoginPage.adminUsernameKey) ??
+                AdminLoginPage.defaultAdminUsername;
+
+        final oldPassword =
+            prefs.getString(AdminLoginPage.adminPasswordKey);
+
+        await secure.write(
+          key: AdminLoginPage.adminUsernameKey,
+          value: username,
+        );
+
+        if (oldPassword != null) {
+          await secure.write(
+            key: AdminLoginPage.adminPasswordKey,
+            value: oldPassword,
+          );
+        }
+
+        await prefs.remove(AdminLoginPage.adminUsernameKey);
+        await prefs.remove(AdminLoginPage.adminPasswordKey);
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        _currentUsername = username ?? AdminLoginPage.defaultAdminUsername;
+        _usernameController.text = username ?? AdminLoginPage.defaultAdminUsername;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _loading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Unable to load secure admin data: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _saveChanges() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final newUsername = _usernameController.text.trim();
+    final newPassword = _newPasswordController.text;
+
+    if (newUsername.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Admin username cannot be empty.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'New password must contain at least 8 characters.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (newPassword != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('New passwords do not match.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _saving = true;
+    });
+
+    try {
+      final secure = AdminLoginPage.secureStorage;
+
+      final savedPassword =
+          await secure.read(
+            key: AdminLoginPage.adminPasswordKey,
+          ) ??
+          AdminLoginPage.defaultAdminPassword;
+
+      final currentPassword =
+          _currentPasswordController.text;
+
+      if (currentPassword != savedPassword) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Current password is incorrect.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      await secure.write(
+        key: AdminLoginPage.adminUsernameKey,
+        value: newUsername,
+      );
+
+      await secure.write(
+        key: AdminLoginPage.adminPasswordKey,
+        value: newPassword,
+      );
+
+      // Clear old insecure copies if they still exist.
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(AdminLoginPage.adminUsernameKey);
+      await prefs.remove(AdminLoginPage.adminPasswordKey);
+
+      if (!mounted) return;
+
+      setState(() {
+        _currentUsername = newUsername;
+        _currentPasswordController.clear();
+        _newPasswordController.clear();
+        _confirmPasswordController.clear();
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Admin login credentials updated securely!',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Secure save failed: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+        });
+      }
+    }
+  }
+
+  InputDecoration _decoration(
+    String label,
+    IconData icon, {
+    Widget? suffixIcon,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon),
+      suffixIcon: suffixIcon,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Administration Login'),
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
+      ),
+      body: _loading
+          ? const Center(
+              child: CircularProgressIndicator(
+                color: Colors.orange,
+              ),
+            )
+          : SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(18),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      Card(
+                        elevation: 5,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(22),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(22),
+                          child: Column(
+                            children: [
+                              const CircleAvatar(
+                                radius: 42,
+                                backgroundColor: Colors.orange,
+                                child: Icon(
+                                  Icons.admin_panel_settings,
+                                  color: Colors.white,
+                                  size: 48,
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                              const Text(
+                                'ADMINISTRATION LOGIN',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 21,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'Current username: $_currentUsername',
+                                style: const TextStyle(
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 18),
+
+                      TextFormField(
+                        controller: _currentPasswordController,
+                        obscureText: _obscureCurrent,
+                        decoration: _decoration(
+                          'Current Password',
+                          Icons.lock_outline,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscureCurrent
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscureCurrent = !_obscureCurrent;
+                              });
+                            },
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Enter current password';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      TextFormField(
+                        controller: _usernameController,
+                        textInputAction: TextInputAction.next,
+                        decoration: _decoration(
+                          'New Admin Username',
+                          Icons.person_outline,
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Enter new username';
+                          }
+
+                          if (value.trim().length < 3) {
+                            return 'Username must be at least 3 characters';
+                          }
+
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      TextFormField(
+                        controller: _newPasswordController,
+                        obscureText: _obscureNew,
+                        textInputAction: TextInputAction.next,
+                        decoration: _decoration(
+                          'New Password',
+                          Icons.lock,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscureNew
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscureNew = !_obscureNew;
+                              });
+                            },
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Enter new password';
+                          }
+
+                          if (value.length < 6) {
+                            return 'Password must be at least 6 characters';
+                          }
+
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      TextFormField(
+                        controller: _confirmPasswordController,
+                        obscureText: _obscureConfirm,
+                        decoration: _decoration(
+                          'Confirm New Password',
+                          Icons.lock_reset,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscureConfirm
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscureConfirm = !_obscureConfirm;
+                              });
+                            },
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Confirm new password';
+                          }
+
+                          if (value != _newPasswordController.text) {
+                            return 'Passwords do not match';
+                          }
+
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      SizedBox(
+                        width: double.infinity,
+                        height: 54,
+                        child: ElevatedButton.icon(
+                          onPressed: _saving ? null : _saveChanges,
+                          icon: _saving
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.save),
+                          label: Text(
+                            _saving
+                                ? 'Saving...'
+                                : 'SAVE LOGIN CHANGES',
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 18),
+
+                      const Card(
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                color: Colors.orange,
+                              ),
+                              SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Username aur password change karne ke liye '
+                                  'pehle current password enter karna zaroori hai.',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
     );
   }
 }
