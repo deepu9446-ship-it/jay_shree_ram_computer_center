@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'attendance_page.dart';
@@ -5795,6 +5796,8 @@ class _CertificatesManagementPageState
     final prefs = await SharedPreferences.getInstance();
     final data = prefs.getStringList(_storageKey) ?? [];
 
+    if (!mounted) return;
+
     setState(() {
       _certificates = data
           .map((e) => Map<String, dynamic>.from(jsonDecode(e)))
@@ -5811,117 +5814,486 @@ class _CertificatesManagementPageState
     );
   }
 
+  Future<void> _deleteAttachmentFile(String? path) async {
+    if (path == null || path.trim().isEmpty) return;
+
+    try {
+      final file = File(path);
+
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } catch (_) {
+      // File delete failure should not break certificate deletion.
+    }
+  }
+
+  Future<Map<String, String>?> _pickCertificateFile() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+        withData: false,
+      );
+
+      if (result == null || result.files.isEmpty) {
+        return null;
+      }
+
+      final selected = result.files.single;
+      final sourcePath = selected.path;
+
+      if (sourcePath == null || sourcePath.trim().isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Selected file path नहीं मिला'),
+            ),
+          );
+        }
+        return null;
+      }
+
+      final sourceFile = File(sourcePath);
+
+      if (!await sourceFile.exists()) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Selected file उपलब्ध नहीं है'),
+            ),
+          );
+        }
+        return null;
+      }
+
+      final appDir = await getApplicationDocumentsDirectory();
+
+      final certificateDir = Directory(
+        '${appDir.path}/certificates',
+      );
+
+      if (!await certificateDir.exists()) {
+        await certificateDir.create(recursive: true);
+      }
+
+      final originalName = selected.name.isNotEmpty
+          ? selected.name
+          : sourcePath.split('/').last;
+
+      final safeName = originalName
+          .replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+
+      final destinationPath =
+          '${certificateDir.path}/${timestamp}_$safeName';
+
+      final copiedFile = await sourceFile.copy(destinationPath);
+
+      return {
+        'path': copiedFile.path,
+        'name': originalName,
+      };
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Certificate attach नहीं हो पाया: $e'),
+          ),
+        );
+      }
+
+      return null;
+    }
+  }
+
+  Future<void> _openCertificate(String path) async {
+    try {
+      final file = File(path);
+
+      if (!await file.exists()) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Certificate file नहीं मिली'),
+            ),
+          );
+        }
+        return;
+      }
+
+      final opened = await launchUrl(
+        Uri.file(path),
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!opened && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Certificate खोलने के लिए suitable app नहीं मिला',
+            ),
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Certificate open नहीं हो पाया'),
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _showCertificateDialog({int? index}) async {
-    final existing = index == null ? null : _certificates[index];
+    final existing =
+        index == null ? null : _certificates[index];
 
     final studentController = TextEditingController(
       text: existing?['student'] ?? '',
     );
+
     final courseController = TextEditingController(
       text: existing?['course'] ?? '',
     );
+
     final numberController = TextEditingController(
       text: existing?['number'] ?? '',
     );
-    final dateController = TextEditingController(text: existing?['date'] ?? '');
 
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(index == null ? 'Add Certificate' : 'Edit Certificate'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: studentController,
-                  decoration: const InputDecoration(
-                    labelText: 'Student Name',
-                    prefixIcon: Icon(Icons.person),
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: courseController,
-                  decoration: const InputDecoration(
-                    labelText: 'Course',
-                    prefixIcon: Icon(Icons.menu_book),
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: numberController,
-                  decoration: const InputDecoration(
-                    labelText: 'Certificate Number',
-                    prefixIcon: Icon(Icons.confirmation_number),
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: dateController,
-                  decoration: const InputDecoration(
-                    labelText: 'Issue Date',
-                    hintText: 'DD/MM/YYYY',
-                    prefixIcon: Icon(Icons.calendar_today),
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            FilledButton.icon(
-              onPressed: () async {
-                if (studentController.text.trim().isEmpty) {
-                  ScaffoldMessenger.of(this.context).showSnackBar(
-                    const SnackBar(content: Text('Student name required')),
-                  );
-                  return;
-                }
-
-                final certificate = {
-                  'student': studentController.text.trim(),
-                  'course': courseController.text.trim(),
-                  'number': numberController.text.trim(),
-                  'date': dateController.text.trim(),
-                };
-
-                setState(() {
-                  if (index == null) {
-                    _certificates.add(certificate);
-                  } else {
-                    _certificates[index] = certificate;
-                  }
-                });
-
-                await _saveCertificates();
-
-                if (!mounted) return;
-    Navigator.pop(context);
-              },
-              icon: const Icon(Icons.save),
-              label: const Text('Save'),
-            ),
-          ],
-        );
-      },
+    final dateController = TextEditingController(
+      text: existing?['date'] ?? '',
     );
+
+    String? attachmentPath =
+        existing?['attachmentPath']?.toString();
+
+    String? attachmentName =
+        existing?['attachmentName']?.toString();
+
+    bool removeAttachment = false;
+
+    try {
+      await showDialog(
+        context: context,
+        builder: (dialogContext) {
+          return StatefulBuilder(
+            builder: (context, setDialogState) {
+              return AlertDialog(
+                title: Text(
+                  index == null
+                      ? 'Add Certificate'
+                      : 'Edit Certificate',
+                ),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: studentController,
+                        decoration: const InputDecoration(
+                          labelText: 'Student Name',
+                          prefixIcon: Icon(Icons.person),
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      TextField(
+                        controller: courseController,
+                        decoration: const InputDecoration(
+                          labelText: 'Course',
+                          prefixIcon: Icon(Icons.menu_book),
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      TextField(
+                        controller: numberController,
+                        decoration: const InputDecoration(
+                          labelText: 'Certificate Number',
+                          prefixIcon:
+                              Icon(Icons.confirmation_number),
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      TextField(
+                        controller: dateController,
+                        decoration: const InputDecoration(
+                          labelText: 'Issue Date',
+                          hintText: 'DD/MM/YYYY',
+                          prefixIcon:
+                              Icon(Icons.calendar_today),
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Colors.orange.shade300,
+                          ),
+                          borderRadius:
+                              BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                          children: [
+                            const Row(
+                              children: [
+                                Icon(
+                                  Icons.attach_file,
+                                  color: Colors.orange,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Attached Certificate',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 10),
+
+                            if (attachmentName != null &&
+                                attachmentName!.isNotEmpty &&
+                                !removeAttachment)
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.insert_drive_file,
+                                    size: 28,
+                                  ),
+                                  const SizedBox(width: 8),
+
+                                  Expanded(
+                                    child: Text(
+                                      attachmentName!,
+                                      maxLines: 2,
+                                      overflow:
+                                          TextOverflow.ellipsis,
+                                    ),
+                                  ),
+
+                                  IconButton(
+                                    tooltip: 'Remove',
+                                    onPressed: () {
+                                      setDialogState(() {
+                                        removeAttachment = true;
+                                        attachmentPath = null;
+                                        attachmentName = null;
+                                      });
+                                    },
+                                    icon: const Icon(
+                                      Icons.delete_outline,
+                                      color: Colors.red,
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                            if (removeAttachment ||
+                                attachmentName == null ||
+                                attachmentName!.isEmpty)
+                              const Padding(
+                                padding:
+                                    EdgeInsets.only(bottom: 8),
+                                child: Text(
+                                  'No certificate attached',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ),
+
+                            const SizedBox(height: 4),
+
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: () async {
+                                  final picked =
+                                      await _pickCertificateFile();
+
+                                  if (picked == null) return;
+
+                                  setDialogState(() {
+                                    attachmentPath =
+                                        picked['path'];
+                                    attachmentName =
+                                        picked['name'];
+                                    removeAttachment = false;
+                                  });
+                                },
+                                icon: const Icon(
+                                  Icons.upload_file,
+                                ),
+                                label: Text(
+                                  attachmentName != null &&
+                                          attachmentName!.isNotEmpty
+                                      ? 'Replace Certificate'
+                                      : 'Attach Certificate',
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(height: 4),
+
+                            const Text(
+                              'Allowed: PDF, JPG, JPEG, PNG',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                actions: [
+                  TextButton(
+                    onPressed: () =>
+                        Navigator.pop(dialogContext),
+                    child: const Text('Cancel'),
+                  ),
+
+                  FilledButton.icon(
+                    onPressed: () async {
+                      if (studentController.text
+                          .trim()
+                          .isEmpty) {
+                        ScaffoldMessenger.of(this.context)
+                            .showSnackBar(
+                          const SnackBar(
+                            content:
+                                Text('Student name required'),
+                          ),
+                        );
+                        return;
+                      }
+
+                      final oldAttachmentPath =
+                          existing?['attachmentPath']
+                              ?.toString();
+
+                      final certificate = {
+                        'student':
+                            studentController.text.trim(),
+                        'course':
+                            courseController.text.trim(),
+                        'number':
+                            numberController.text.trim(),
+                        'date':
+                            dateController.text.trim(),
+                        'attachmentPath':
+                            removeAttachment
+                                ? ''
+                                : (attachmentPath ?? ''),
+                        'attachmentName':
+                            removeAttachment
+                                ? ''
+                                : (attachmentName ?? ''),
+                      };
+
+                      if (!mounted) return;
+
+                      setState(() {
+                        if (index == null) {
+                          _certificates.add(certificate);
+                        } else {
+                          _certificates[index] =
+                              certificate;
+                        }
+                      });
+
+                      await _saveCertificates();
+
+                      if (!mounted) return;
+
+                      // Delete old file only after new record
+                      // has been successfully saved.
+                      final newAttachmentPath =
+                          certificate['attachmentPath']
+                              ?.toString();
+
+                      if (oldAttachmentPath != null &&
+                          oldAttachmentPath.isNotEmpty &&
+                          oldAttachmentPath !=
+                              newAttachmentPath) {
+                        await _deleteAttachmentFile(
+                          oldAttachmentPath,
+                        );
+                      }
+
+                      if (!mounted) return;
+
+                      Navigator.pop(dialogContext);
+
+                      ScaffoldMessenger.of(context)
+                          .showSnackBar(
+                        const SnackBar(
+                          content:
+                              Text('Certificate record saved'),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.save),
+                    label: const Text('Save Record'),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      studentController.dispose();
+      courseController.dispose();
+      numberController.dispose();
+      dateController.dispose();
+    }
   }
 
   Future<void> _deleteCertificate(int index) async {
+    final certificate = _certificates[index];
+
+    final attachmentPath =
+        certificate['attachmentPath']?.toString();
+
     setState(() {
       _certificates.removeAt(index);
     });
 
     await _saveCertificates();
+
+    await _deleteAttachmentFile(attachmentPath);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Certificate deleted'),
+      ),
+    );
   }
 
   @override
@@ -5932,11 +6304,14 @@ class _CertificatesManagementPageState
         backgroundColor: Colors.orange,
         foregroundColor: Colors.white,
       ),
-      floatingActionButton: FloatingActionButton.extended(
+
+      floatingActionButton:
+          FloatingActionButton.extended(
         onPressed: () => _showCertificateDialog(),
         icon: const Icon(Icons.add),
         label: const Text('Add Certificate'),
       ),
+
       body: _certificates.isEmpty
           ? Center(
               child: Padding(
@@ -5949,13 +6324,22 @@ class _CertificatesManagementPageState
                       size: 80,
                       color: Colors.orange.shade300,
                     ),
+
                     const SizedBox(height: 16),
+
                     const Text(
                       'No Certificates Added',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    const Text(
+                      'Add certificate details and attach PDF/JPG/PNG.',
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
@@ -5965,51 +6349,147 @@ class _CertificatesManagementPageState
               padding: const EdgeInsets.all(12),
               itemCount: _certificates.length,
               itemBuilder: (context, index) {
-                final certificate = _certificates[index];
+                final certificate =
+                    _certificates[index];
+
+                final attachmentPath =
+                    certificate['attachmentPath']
+                        ?.toString();
+
+                final attachmentName =
+                    certificate['attachmentName']
+                        ?.toString();
+
+                final hasAttachment =
+                    attachmentPath != null &&
+                    attachmentPath.isNotEmpty;
 
                 return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.orange,
-                      child: const Icon(
-                        Icons.workspace_premium,
-                        color: Colors.white,
-                      ),
-                    ),
-                    title: Text(
-                      certificate['student'] ?? '',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(
-                      'Course: ${certificate['course'] ?? '-'}\n'
-                      'Certificate No.: ${certificate['number'] ?? '-'}\n'
-                      'Issue Date: ${certificate['date'] ?? '-'}',
-                    ),
-                    isThreeLine: true,
-                    trailing: PopupMenuButton<String>(
-                      onSelected: (value) {
-                        if (value == 'edit') {
-                          _showCertificateDialog(index: index);
-                        } else {
-                          _deleteCertificate(index);
-                        }
-                      },
-                      itemBuilder: (context) => const [
-                        PopupMenuItem(
-                          value: 'edit',
-                          child: ListTile(
-                            leading: Icon(Icons.edit),
-                            title: Text('Edit'),
+                  margin:
+                      const EdgeInsets.only(bottom: 12),
+
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Column(
+                      children: [
+                        ListTile(
+                          leading: const CircleAvatar(
+                            backgroundColor: Colors.orange,
+                            child: Icon(
+                              Icons.workspace_premium,
+                              color: Colors.white,
+                            ),
+                          ),
+
+                          title: Text(
+                            certificate['student'] ?? '',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+
+                          subtitle: Text(
+                            'Course: ${certificate['course'] ?? '-'}\n'
+                            'Certificate No.: ${certificate['number'] ?? '-'}\n'
+                            'Issue Date: ${certificate['date'] ?? '-'}',
+                          ),
+
+                          isThreeLine: true,
+
+                          trailing:
+                              PopupMenuButton<String>(
+                            onSelected: (value) {
+                              if (value == 'edit') {
+                                _showCertificateDialog(
+                                  index: index,
+                                );
+                              } else if (value ==
+                                  'delete') {
+                                _deleteCertificate(index);
+                              }
+                            },
+
+                            itemBuilder: (context) =>
+                                const [
+                              PopupMenuItem(
+                                value: 'edit',
+                                child: ListTile(
+                                  leading:
+                                      Icon(Icons.edit),
+                                  title: Text('Edit'),
+                                ),
+                              ),
+
+                              PopupMenuItem(
+                                value: 'delete',
+                                child: ListTile(
+                                  leading:
+                                      Icon(Icons.delete),
+                                  title: Text('Delete'),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        PopupMenuItem(
-                          value: 'delete',
-                          child: ListTile(
-                            leading: Icon(Icons.delete),
-                            title: Text('Delete'),
+
+                        if (hasAttachment)
+                          Container(
+                            width: double.infinity,
+                            margin:
+                                const EdgeInsets.fromLTRB(
+                              8,
+                              0,
+                              8,
+                              8,
+                            ),
+                            padding:
+                                const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.orange
+                                  .withValues(alpha: 0.08),
+                              borderRadius:
+                                  BorderRadius.circular(10),
+                              border: Border.all(
+                                color:
+                                    Colors.orange.shade200,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.picture_as_pdf,
+                                  color: Colors.orange,
+                                ),
+
+                                const SizedBox(width: 8),
+
+                                Expanded(
+                                  child: Text(
+                                    attachmentName ??
+                                        'Certificate File',
+                                    maxLines: 1,
+                                    overflow:
+                                        TextOverflow.ellipsis,
+                                  ),
+                                ),
+
+                                const SizedBox(width: 8),
+
+                                OutlinedButton.icon(
+                                  onPressed: () =>
+                                      _openCertificate(
+                                    attachmentPath,
+                                  ),
+                                  icon: const Icon(
+                                    Icons.open_in_new,
+                                    size: 18,
+                                  ),
+                                  label:
+                                      const Text('Open'),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ),
