@@ -6035,6 +6035,9 @@ class _QrScannerPageState extends State<QrScannerPage> {
   String _result = 'QR Code scan करें';
   bool _scanned = false;
 
+  final TextEditingController _amountController =
+      TextEditingController();
+
   void _onDetect(BarcodeCapture capture) {
     if (_scanned) return;
 
@@ -6043,7 +6046,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
 
       if (value != null && value.trim().isNotEmpty) {
         setState(() {
-          _result = value;
+          _result = value.trim();
           _scanned = true;
         });
         break;
@@ -6058,29 +6061,160 @@ class _QrScannerPageState extends State<QrScannerPage> {
     });
   }
 
+  Future<void> _makeUpiPayment() async {
+    final amount = _amountController.text.trim();
+
+    if (amount.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('पहले payment amount डालें'),
+        ),
+      );
+      return;
+    }
+
+    final parsedAmount = double.tryParse(amount);
+
+    if (parsedAmount == null || parsedAmount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('सही amount डालें'),
+        ),
+      );
+      return;
+    }
+
+    final qrValue = _result.trim();
+
+    if (qrValue.isEmpty ||
+        qrValue == 'QR Code scan करें') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('पहले QR Code scan करें'),
+        ),
+      );
+      return;
+    }
+
+    Uri? paymentUri;
+
+    // अगर scanned QR UPI payment URI है,
+    // तो उसी UPI ID/payment data का उपयोग करें।
+    if (qrValue.toLowerCase().startsWith('upi://')) {
+      try {
+        final original = Uri.parse(qrValue);
+
+        final params = Map<String, String>.from(
+          original.queryParameters,
+        );
+
+        params['am'] = parsedAmount.toStringAsFixed(2);
+        params['cu'] = 'INR';
+
+        paymentUri = original.replace(
+          queryParameters: params,
+        );
+      } catch (_) {
+        paymentUri = null;
+      }
+    }
+
+    // अगर QR में केवल UPI ID है, तो UPI payment URI बनाएं।
+    if (paymentUri == null &&
+        RegExp(
+          r'^[\w.\-]+@[\w.\-]+$',
+          caseSensitive: false,
+        ).hasMatch(qrValue)) {
+      paymentUri = Uri(
+        scheme: 'upi',
+        host: 'pay',
+        queryParameters: {
+          'pa': qrValue,
+          'pn': 'Jay Shree Ram Computer Center',
+          'am': parsedAmount.toStringAsFixed(2),
+          'cu': 'INR',
+        },
+      );
+    }
+
+    if (paymentUri == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Scanned QR में valid UPI ID नहीं मिली',
+          ),
+        ),
+      );
+      return;
+    }
+
+    try {
+      final opened = await launchUrl(
+        paymentUri,
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!opened && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'कोई UPI payment app उपलब्ध नहीं है',
+            ),
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Payment app open नहीं हो पाया',
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final canPay = _scanned &&
+        _result.trim().isNotEmpty &&
+        _result != 'QR Code scan करें';
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('QR Scanner'),
+        title: const Text('QR Scanner & Payment'),
         backgroundColor: Colors.orange,
         foregroundColor: Colors.white,
       ),
       body: Column(
         children: [
           Expanded(
-            flex: 6,
+            flex: 5,
             child: Stack(
               fit: StackFit.expand,
               children: [
-                MobileScanner(onDetect: _onDetect),
+                MobileScanner(
+                  onDetect: _onDetect,
+                ),
                 Center(
                   child: Container(
                     width: 250,
                     height: 250,
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.white, width: 3),
-                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: Colors.white,
+                        width: 3,
+                      ),
+                      borderRadius:
+                          BorderRadius.circular(18),
                     ),
                   ),
                 ),
@@ -6089,45 +6223,137 @@ class _QrScannerPageState extends State<QrScannerPage> {
                   left: 20,
                   right: 20,
                   child: Container(
-                    padding: const EdgeInsets.all(12),
+                    padding:
+                        const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.black54,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius:
+                          BorderRadius.circular(12),
                     ),
                     child: const Text(
                       'QR Code को box के अंदर रखें',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white, fontSize: 16),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
           ),
+
           Expanded(
-            flex: 3,
-            child: Padding(
+            flex: 4,
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
                   const Text(
                     'Scan Result',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
+
                   const SizedBox(height: 8),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: SelectableText(
-                        _result,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 16),
+
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade50,
+                      borderRadius:
+                          BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.orange.shade200,
+                      ),
+                    ),
+                    child: SelectableText(
+                      _result,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 15,
                       ),
                     ),
                   ),
-                  FilledButton.icon(
-                    onPressed: _scanAgain,
-                    icon: const Icon(Icons.qr_code_scanner),
-                    label: const Text('Scan Again'),
+
+                  const SizedBox(height: 14),
+
+                  TextField(
+                    controller: _amountController,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: 'Payment Amount',
+                      hintText: 'उदाहरण: 500',
+                      prefixText: '₹ ',
+                      border: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(12),
+                      ),
+                      prefixIcon: const Icon(
+                        Icons.currency_rupee,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed:
+                          canPay ? _makeUpiPayment : null,
+                      icon: const Icon(
+                        Icons.payment,
+                      ),
+                      label: const Text(
+                        'Pay Now',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor:
+                            Colors.green.shade700,
+                        padding:
+                            const EdgeInsets.symmetric(
+                          vertical: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _scanAgain,
+                      icon: const Icon(
+                        Icons.qr_code_scanner,
+                      ),
+                      label: const Text(
+                        'Scan Again',
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  const Text(
+                    'Payment आपके फोन की UPI app में खुलेगा।',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
