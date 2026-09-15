@@ -4080,6 +4080,48 @@ class _ReceiptManagementPageState extends State<ReceiptManagementPage> {
 
   final List<Map<String, String>> receipts = [];
 
+  PlatformFile? selectedAttachment;
+
+  Future<void> pickReceiptAttachment() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: [
+          'pdf',
+          'jpg',
+          'jpeg',
+          'png',
+          'doc',
+          'docx',
+          'xls',
+          'xlsx',
+        ],
+        withData: false,
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        if (!mounted) return;
+        setState(() {
+          selectedAttachment = result.files.first;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Attachment select failed: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void removeReceiptAttachment() {
+    setState(() {
+      selectedAttachment = null;
+    });
+  }
+
   void saveReceipt() {
     if (studentController.text.trim().isEmpty ||
         courseController.text.trim().isEmpty ||
@@ -4104,12 +4146,17 @@ class _ReceiptManagementPageState extends State<ReceiptManagementPage> {
         'amount': amountController.text.trim(),
         'date':
             '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+        'attachment': selectedAttachment?.name ?? '',
+        'attachmentPath': selectedAttachment?.path ?? '',
       });
     });
 
     studentController.clear();
     courseController.clear();
     amountController.clear();
+    setState(() {
+      selectedAttachment = null;
+    });
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -4215,6 +4262,45 @@ class _ReceiptManagementPageState extends State<ReceiptManagementPage> {
                       '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
                     ),
                     onTap: selectDate,
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: const BorderSide(color: Colors.grey),
+                    ),
+                    child: ListTile(
+                      leading: const Icon(
+                        Icons.attach_file,
+                        color: Colors.orange,
+                        size: 30,
+                      ),
+                      title: Text(
+                        selectedAttachment == null
+                            ? 'Attach Document / Receipt'
+                            : selectedAttachment!.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(
+                        selectedAttachment == null
+                            ? 'PDF, JPG, PNG, DOC, DOCX, XLS, XLSX'
+                            : 'Attachment selected',
+                      ),
+                      trailing: selectedAttachment == null
+                          ? const Icon(Icons.upload_file)
+                          : IconButton(
+                              icon: const Icon(
+                                Icons.close,
+                                color: Colors.red,
+                              ),
+                              onPressed: removeReceiptAttachment,
+                            ),
+                      onTap: pickReceiptAttachment,
+                    ),
                   ),
 
                   const SizedBox(height: 15),
