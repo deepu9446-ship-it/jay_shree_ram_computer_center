@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -1110,8 +1112,7 @@ class AdminLoginPage extends StatefulWidget {
   static const String defaultAdminUsername = 'admin';
   static const String defaultAdminPassword = '123456';
 
-  static const FlutterSecureStorage secureStorage =
-      FlutterSecureStorage();
+  static const FlutterSecureStorage secureStorage = FlutterSecureStorage();
 
   @override
   State<AdminLoginPage> createState() => _AdminLoginPageState();
@@ -1142,18 +1143,13 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
     try {
       final secure = AdminLoginPage.secureStorage;
 
-      final lockValue = await secure.read(
-        key: AdminLoginPage.lockUntilKey,
-      );
+      final lockValue = await secure.read(key: AdminLoginPage.lockUntilKey);
 
-      final lockUntil =
-          int.tryParse(lockValue ?? '') ?? 0;
+      final lockUntil = int.tryParse(lockValue ?? '') ?? 0;
 
       if (lockUntil > DateTime.now().millisecondsSinceEpoch) {
-        final seconds = ((lockUntil -
-                    DateTime.now().millisecondsSinceEpoch) /
-                1000)
-            .ceil();
+        final seconds =
+            ((lockUntil - DateTime.now().millisecondsSinceEpoch) / 1000).ceil();
 
         if (!mounted) return;
 
@@ -1182,11 +1178,11 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
 
         savedUsername =
             prefs.getString(AdminLoginPage.adminUsernameKey) ??
-                AdminLoginPage.defaultAdminUsername;
+            AdminLoginPage.defaultAdminUsername;
 
         savedPassword =
             prefs.getString(AdminLoginPage.adminPasswordKey) ??
-                AdminLoginPage.defaultAdminPassword;
+            AdminLoginPage.defaultAdminPassword;
 
         await secure.write(
           key: AdminLoginPage.adminUsernameKey,
@@ -1213,40 +1209,32 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (_) => const DashboardPage(),
-          ),
+          MaterialPageRoute(builder: (_) => const DashboardPage()),
         );
       } else {
         final attemptsValue = await secure.read(
           key: AdminLoginPage.loginAttemptsKey,
         );
 
-        final attempts =
-            (int.tryParse(attemptsValue ?? '') ?? 0) + 1;
+        final attempts = (int.tryParse(attemptsValue ?? '') ?? 0) + 1;
 
         if (attempts >= 5) {
-          final lockTime =
-              DateTime.now()
-                  .add(const Duration(seconds: 30))
-                  .millisecondsSinceEpoch;
+          final lockTime = DateTime.now()
+              .add(const Duration(seconds: 30))
+              .millisecondsSinceEpoch;
 
           await secure.write(
             key: AdminLoginPage.lockUntilKey,
             value: lockTime.toString(),
           );
 
-          await secure.delete(
-            key: AdminLoginPage.loginAttemptsKey,
-          );
+          await secure.delete(key: AdminLoginPage.loginAttemptsKey);
 
           if (!mounted) return;
 
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text(
-                '5 failed attempts. Login locked for 30 seconds.',
-              ),
+              content: Text('5 failed attempts. Login locked for 30 seconds.'),
               backgroundColor: Colors.red,
             ),
           );
@@ -1459,14 +1447,11 @@ class DashboardItem {
   });
 }
 
-
-
 class DocumentManagementPage extends StatefulWidget {
   const DocumentManagementPage({super.key});
 
   @override
-  State<DocumentManagementPage> createState() =>
-      _DocumentManagementPageState();
+  State<DocumentManagementPage> createState() => _DocumentManagementPageState();
 }
 
 class _DocumentManagementPageState extends State<DocumentManagementPage> {
@@ -1608,10 +1593,7 @@ class _DocumentManagementPageState extends State<DocumentManagementPage> {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$name deleted'),
-        backgroundColor: Colors.orange,
-      ),
+      SnackBar(content: Text('$name deleted'), backgroundColor: Colors.orange),
     );
   }
 
@@ -1655,11 +1637,9 @@ class _DocumentManagementPageState extends State<DocumentManagementPage> {
 
     return _documents.where((doc) {
       final name = (doc['name'] ?? '').toString().toLowerCase();
-      final extension =
-          (doc['extension'] ?? '').toString().toLowerCase();
+      final extension = (doc['extension'] ?? '').toString().toLowerCase();
 
-      return name.contains(_searchQuery) ||
-          extension.contains(_searchQuery);
+      return name.contains(_searchQuery) || extension.contains(_searchQuery);
     }).toList();
   }
 
@@ -1718,37 +1698,24 @@ class _DocumentManagementPageState extends State<DocumentManagementPage> {
           ),
 
           Container(
-            margin: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 4,
-            ),
+            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  Colors.orange.shade700,
-                  Colors.orange.shade400,
-                ],
+                colors: [Colors.orange.shade700, Colors.orange.shade400],
               ),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
               children: [
-                const Icon(
-                  Icons.folder_copy,
-                  color: Colors.white,
-                  size: 34,
-                ),
+                const Icon(Icons.folder_copy, color: Colors.white, size: 34),
                 const SizedBox(width: 14),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
                       'Total Documents',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Colors.white, fontSize: 14),
                     ),
                     Text(
                       '${_documents.length}',
@@ -1813,21 +1780,15 @@ class _DocumentManagementPageState extends State<DocumentManagementPage> {
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(
-                      12,
-                      8,
-                      12,
-                      90,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 90),
                     itemCount: documents.length,
                     itemBuilder: (context, index) {
                       final document = documents[index];
 
-                      final name =
-                          document['name'] ?? 'Document';
+                      final name = document['name'] ?? 'Document';
 
-                      final extension =
-                          (document['extension'] ?? '').toString();
+                      final extension = (document['extension'] ?? '')
+                          .toString();
 
                       return Card(
                         elevation: 3,
@@ -1836,15 +1797,13 @@ class _DocumentManagementPageState extends State<DocumentManagementPage> {
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: ListTile(
-                          contentPadding:
-                              const EdgeInsets.symmetric(
+                          contentPadding: const EdgeInsets.symmetric(
                             horizontal: 14,
                             vertical: 7,
                           ),
                           leading: CircleAvatar(
                             radius: 25,
-                            backgroundColor:
-                                Colors.orange.shade50,
+                            backgroundColor: Colors.orange.shade50,
                             child: Icon(
                               _documentIcon(extension),
                               color: Colors.orange,
@@ -1855,9 +1814,7 @@ class _DocumentManagementPageState extends State<DocumentManagementPage> {
                             name,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           subtitle: Text(
                             '${extension.toUpperCase()} • '
@@ -1870,8 +1827,7 @@ class _DocumentManagementPageState extends State<DocumentManagementPage> {
                               color: Colors.red,
                             ),
                             onPressed: () {
-                              final actualIndex =
-                                  _documents.indexOf(document);
+                              final actualIndex = _documents.indexOf(document);
 
                               if (actualIndex != -1) {
                                 _deleteDocument(actualIndex);
@@ -2004,9 +1960,9 @@ class _DashboardPageState extends State<DashboardPage> {
             return const ReceiptManagementPage();
           }
 
-        if (item.title == 'Document') {
-          return const DocumentManagementPage();
-        }
+          if (item.title == 'Document') {
+            return const DocumentManagementPage();
+          }
 
           if (item.title == 'Reports') {
             return const ReportsManagementPage();
@@ -5625,8 +5581,8 @@ class _CoursesManagementPageState extends State<CoursesManagementPage> {
 
                 await _saveCourses();
 
-                if (!mounted) return;
-    Navigator.pop(context);
+                if (!context.mounted) return;
+                Navigator.pop(context);
               },
               icon: const Icon(Icons.save),
               label: const Text('Save'),
@@ -5846,9 +5802,7 @@ class _CertificatesManagementPageState
       if (sourcePath == null || sourcePath.trim().isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Selected file path नहीं मिला'),
-            ),
+            const SnackBar(content: Text('Selected file path नहीं मिला')),
           );
         }
         return null;
@@ -5859,9 +5813,7 @@ class _CertificatesManagementPageState
       if (!await sourceFile.exists()) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Selected file उपलब्ध नहीं है'),
-            ),
+            const SnackBar(content: Text('Selected file उपलब्ध नहीं है')),
           );
         }
         return null;
@@ -5869,9 +5821,7 @@ class _CertificatesManagementPageState
 
       final appDir = await getApplicationDocumentsDirectory();
 
-      final certificateDir = Directory(
-        '${appDir.path}/certificates',
-      );
+      final certificateDir = Directory('${appDir.path}/certificates');
 
       if (!await certificateDir.exists()) {
         await certificateDir.create(recursive: true);
@@ -5881,26 +5831,19 @@ class _CertificatesManagementPageState
           ? selected.name
           : sourcePath.split('/').last;
 
-      final safeName = originalName
-          .replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+      final safeName = originalName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
 
-      final destinationPath =
-          '${certificateDir.path}/${timestamp}_$safeName';
+      final destinationPath = '${certificateDir.path}/${timestamp}_$safeName';
 
       final copiedFile = await sourceFile.copy(destinationPath);
 
-      return {
-        'path': copiedFile.path,
-        'name': originalName,
-      };
+      return {'path': copiedFile.path, 'name': originalName};
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Certificate attach नहीं हो पाया: $e'),
-          ),
+          SnackBar(content: Text('Certificate attach नहीं हो पाया: $e')),
         );
       }
 
@@ -5915,9 +5858,7 @@ class _CertificatesManagementPageState
       if (!await file.exists()) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Certificate file नहीं मिली'),
-            ),
+            const SnackBar(content: Text('Certificate file नहीं मिली')),
           );
         }
         return;
@@ -5931,26 +5872,21 @@ class _CertificatesManagementPageState
       if (!opened && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              'Certificate खोलने के लिए suitable app नहीं मिला',
-            ),
+            content: Text('Certificate खोलने के लिए suitable app नहीं मिला'),
           ),
         );
       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Certificate open नहीं हो पाया'),
-          ),
+          const SnackBar(content: Text('Certificate open नहीं हो पाया')),
         );
       }
     }
   }
 
   Future<void> _showCertificateDialog({int? index}) async {
-    final existing =
-        index == null ? null : _certificates[index];
+    final existing = index == null ? null : _certificates[index];
 
     final studentController = TextEditingController(
       text: existing?['student'] ?? '',
@@ -5964,15 +5900,11 @@ class _CertificatesManagementPageState
       text: existing?['number'] ?? '',
     );
 
-    final dateController = TextEditingController(
-      text: existing?['date'] ?? '',
-    );
+    final dateController = TextEditingController(text: existing?['date'] ?? '');
 
-    String? attachmentPath =
-        existing?['attachmentPath']?.toString();
+    String? attachmentPath = existing?['attachmentPath']?.toString();
 
-    String? attachmentName =
-        existing?['attachmentName']?.toString();
+    String? attachmentName = existing?['attachmentName']?.toString();
 
     bool removeAttachment = false;
 
@@ -5984,9 +5916,7 @@ class _CertificatesManagementPageState
             builder: (context, setDialogState) {
               return AlertDialog(
                 title: Text(
-                  index == null
-                      ? 'Add Certificate'
-                      : 'Edit Certificate',
+                  index == null ? 'Add Certificate' : 'Edit Certificate',
                 ),
                 content: SingleChildScrollView(
                   child: Column(
@@ -6018,8 +5948,7 @@ class _CertificatesManagementPageState
                         controller: numberController,
                         decoration: const InputDecoration(
                           labelText: 'Certificate Number',
-                          prefixIcon:
-                              Icon(Icons.confirmation_number),
+                          prefixIcon: Icon(Icons.confirmation_number),
                           border: OutlineInputBorder(),
                         ),
                       ),
@@ -6031,8 +5960,7 @@ class _CertificatesManagementPageState
                         decoration: const InputDecoration(
                           labelText: 'Issue Date',
                           hintText: 'DD/MM/YYYY',
-                          prefixIcon:
-                              Icon(Icons.calendar_today),
+                          prefixIcon: Icon(Icons.calendar_today),
                           border: OutlineInputBorder(),
                         ),
                       ),
@@ -6043,28 +5971,19 @@ class _CertificatesManagementPageState
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          border: Border.all(
-                            color: Colors.orange.shade300,
-                          ),
-                          borderRadius:
-                              BorderRadius.circular(12),
+                          border: Border.all(color: Colors.orange.shade300),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Row(
                               children: [
-                                Icon(
-                                  Icons.attach_file,
-                                  color: Colors.orange,
-                                ),
+                                Icon(Icons.attach_file, color: Colors.orange),
                                 SizedBox(width: 8),
                                 Text(
                                   'Attached Certificate',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
                               ],
                             ),
@@ -6076,18 +5995,14 @@ class _CertificatesManagementPageState
                                 !removeAttachment)
                               Row(
                                 children: [
-                                  const Icon(
-                                    Icons.insert_drive_file,
-                                    size: 28,
-                                  ),
+                                  const Icon(Icons.insert_drive_file, size: 28),
                                   const SizedBox(width: 8),
 
                                   Expanded(
                                     child: Text(
                                       attachmentName!,
                                       maxLines: 2,
-                                      overflow:
-                                          TextOverflow.ellipsis,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
 
@@ -6112,13 +6027,10 @@ class _CertificatesManagementPageState
                                 attachmentName == null ||
                                 attachmentName!.isEmpty)
                               const Padding(
-                                padding:
-                                    EdgeInsets.only(bottom: 8),
+                                padding: EdgeInsets.only(bottom: 8),
                                 child: Text(
                                   'No certificate attached',
-                                  style: TextStyle(
-                                    color: Colors.grey,
-                                  ),
+                                  style: TextStyle(color: Colors.grey),
                                 ),
                               ),
 
@@ -6128,22 +6040,17 @@ class _CertificatesManagementPageState
                               width: double.infinity,
                               child: OutlinedButton.icon(
                                 onPressed: () async {
-                                  final picked =
-                                      await _pickCertificateFile();
+                                  final picked = await _pickCertificateFile();
 
                                   if (picked == null) return;
 
                                   setDialogState(() {
-                                    attachmentPath =
-                                        picked['path'];
-                                    attachmentName =
-                                        picked['name'];
+                                    attachmentPath = picked['path'];
+                                    attachmentName = picked['name'];
                                     removeAttachment = false;
                                   });
                                 },
-                                icon: const Icon(
-                                  Icons.upload_file,
-                                ),
+                                icon: const Icon(Icons.upload_file),
                                 label: Text(
                                   attachmentName != null &&
                                           attachmentName!.isNotEmpty
@@ -6171,47 +6078,35 @@ class _CertificatesManagementPageState
 
                 actions: [
                   TextButton(
-                    onPressed: () =>
-                        Navigator.pop(dialogContext),
+                    onPressed: () => Navigator.pop(dialogContext),
                     child: const Text('Cancel'),
                   ),
 
                   FilledButton.icon(
                     onPressed: () async {
-                      if (studentController.text
-                          .trim()
-                          .isEmpty) {
-                        ScaffoldMessenger.of(this.context)
-                            .showSnackBar(
+                      if (studentController.text.trim().isEmpty) {
+                        ScaffoldMessenger.of(this.context).showSnackBar(
                           const SnackBar(
-                            content:
-                                Text('Student name required'),
+                            content: Text('Student name required'),
                           ),
                         );
                         return;
                       }
 
-                      final oldAttachmentPath =
-                          existing?['attachmentPath']
-                              ?.toString();
+                      final oldAttachmentPath = existing?['attachmentPath']
+                          ?.toString();
 
                       final certificate = {
-                        'student':
-                            studentController.text.trim(),
-                        'course':
-                            courseController.text.trim(),
-                        'number':
-                            numberController.text.trim(),
-                        'date':
-                            dateController.text.trim(),
-                        'attachmentPath':
-                            removeAttachment
-                                ? ''
-                                : (attachmentPath ?? ''),
-                        'attachmentName':
-                            removeAttachment
-                                ? ''
-                                : (attachmentName ?? ''),
+                        'student': studentController.text.trim(),
+                        'course': courseController.text.trim(),
+                        'number': numberController.text.trim(),
+                        'date': dateController.text.trim(),
+                        'attachmentPath': removeAttachment
+                            ? ''
+                            : (attachmentPath ?? ''),
+                        'attachmentName': removeAttachment
+                            ? ''
+                            : (attachmentName ?? ''),
                       };
 
                       if (!mounted) return;
@@ -6220,8 +6115,7 @@ class _CertificatesManagementPageState
                         if (index == null) {
                           _certificates.add(certificate);
                         } else {
-                          _certificates[index] =
-                              certificate;
+                          _certificates[index] = certificate;
                         }
                       });
 
@@ -6231,28 +6125,24 @@ class _CertificatesManagementPageState
 
                       // Delete old file only after new record
                       // has been successfully saved.
-                      final newAttachmentPath =
-                          certificate['attachmentPath']
-                              ?.toString();
+                      final newAttachmentPath = certificate['attachmentPath']
+                          ?.toString();
 
                       if (oldAttachmentPath != null &&
                           oldAttachmentPath.isNotEmpty &&
-                          oldAttachmentPath !=
-                              newAttachmentPath) {
-                        await _deleteAttachmentFile(
-                          oldAttachmentPath,
-                        );
+                          oldAttachmentPath != newAttachmentPath) {
+                        await _deleteAttachmentFile(oldAttachmentPath);
                       }
 
-                      if (!mounted) return;
+                      if (!dialogContext.mounted) return;
 
                       Navigator.pop(dialogContext);
 
-                      ScaffoldMessenger.of(context)
-                          .showSnackBar(
+                      if (!context.mounted) return;
+
+                      ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content:
-                              Text('Certificate record saved'),
+                          content: Text('Certificate record saved'),
                         ),
                       );
                     },
@@ -6276,8 +6166,7 @@ class _CertificatesManagementPageState
   Future<void> _deleteCertificate(int index) async {
     final certificate = _certificates[index];
 
-    final attachmentPath =
-        certificate['attachmentPath']?.toString();
+    final attachmentPath = certificate['attachmentPath']?.toString();
 
     setState(() {
       _certificates.removeAt(index);
@@ -6289,11 +6178,9 @@ class _CertificatesManagementPageState
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Certificate deleted'),
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Certificate deleted')));
   }
 
   @override
@@ -6305,8 +6192,7 @@ class _CertificatesManagementPageState
         foregroundColor: Colors.white,
       ),
 
-      floatingActionButton:
-          FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showCertificateDialog(),
         icon: const Icon(Icons.add),
         label: const Text('Add Certificate'),
@@ -6349,24 +6235,19 @@ class _CertificatesManagementPageState
               padding: const EdgeInsets.all(12),
               itemCount: _certificates.length,
               itemBuilder: (context, index) {
-                final certificate =
-                    _certificates[index];
+                final certificate = _certificates[index];
 
-                final attachmentPath =
-                    certificate['attachmentPath']
-                        ?.toString();
+                final attachmentPath = certificate['attachmentPath']
+                    ?.toString();
 
-                final attachmentName =
-                    certificate['attachmentName']
-                        ?.toString();
+                final attachmentName = certificate['attachmentName']
+                    ?.toString();
 
                 final hasAttachment =
-                    attachmentPath != null &&
-                    attachmentPath.isNotEmpty;
+                    attachmentPath != null && attachmentPath.isNotEmpty;
 
                 return Card(
-                  margin:
-                      const EdgeInsets.only(bottom: 12),
+                  margin: const EdgeInsets.only(bottom: 12),
 
                   child: Padding(
                     padding: const EdgeInsets.all(8),
@@ -6383,9 +6264,7 @@ class _CertificatesManagementPageState
 
                           title: Text(
                             certificate['student'] ?? '',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
 
                           subtitle: Text(
@@ -6396,26 +6275,20 @@ class _CertificatesManagementPageState
 
                           isThreeLine: true,
 
-                          trailing:
-                              PopupMenuButton<String>(
+                          trailing: PopupMenuButton<String>(
                             onSelected: (value) {
                               if (value == 'edit') {
-                                _showCertificateDialog(
-                                  index: index,
-                                );
-                              } else if (value ==
-                                  'delete') {
+                                _showCertificateDialog(index: index);
+                              } else if (value == 'delete') {
                                 _deleteCertificate(index);
                               }
                             },
 
-                            itemBuilder: (context) =>
-                                const [
+                            itemBuilder: (context) => const [
                               PopupMenuItem(
                                 value: 'edit',
                                 child: ListTile(
-                                  leading:
-                                      Icon(Icons.edit),
+                                  leading: Icon(Icons.edit),
                                   title: Text('Edit'),
                                 ),
                               ),
@@ -6423,8 +6296,7 @@ class _CertificatesManagementPageState
                               PopupMenuItem(
                                 value: 'delete',
                                 child: ListTile(
-                                  leading:
-                                      Icon(Icons.delete),
+                                  leading: Icon(Icons.delete),
                                   title: Text('Delete'),
                                 ),
                               ),
@@ -6435,24 +6307,12 @@ class _CertificatesManagementPageState
                         if (hasAttachment)
                           Container(
                             width: double.infinity,
-                            margin:
-                                const EdgeInsets.fromLTRB(
-                              8,
-                              0,
-                              8,
-                              8,
-                            ),
-                            padding:
-                                const EdgeInsets.all(10),
+                            margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                            padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: Colors.orange
-                                  .withValues(alpha: 0.08),
-                              borderRadius:
-                                  BorderRadius.circular(10),
-                              border: Border.all(
-                                color:
-                                    Colors.orange.shade200,
-                              ),
+                              color: Colors.orange.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.orange.shade200),
                             ),
                             child: Row(
                               children: [
@@ -6465,11 +6325,9 @@ class _CertificatesManagementPageState
 
                                 Expanded(
                                   child: Text(
-                                    attachmentName ??
-                                        'Certificate File',
+                                    attachmentName ?? 'Certificate File',
                                     maxLines: 1,
-                                    overflow:
-                                        TextOverflow.ellipsis,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
 
@@ -6477,15 +6335,9 @@ class _CertificatesManagementPageState
 
                                 OutlinedButton.icon(
                                   onPressed: () =>
-                                      _openCertificate(
-                                    attachmentPath,
-                                  ),
-                                  icon: const Icon(
-                                    Icons.open_in_new,
-                                    size: 18,
-                                  ),
-                                  label:
-                                      const Text('Open'),
+                                      _openCertificate(attachmentPath),
+                                  icon: const Icon(Icons.open_in_new, size: 18),
+                                  label: const Text('Open'),
                                 ),
                               ],
                             ),
@@ -6515,8 +6367,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
   String _result = 'QR Code scan करें';
   bool _scanned = false;
 
-  final TextEditingController _amountController =
-      TextEditingController();
+  final TextEditingController _amountController = TextEditingController();
 
   void _onDetect(BarcodeCapture capture) {
     if (_scanned) return;
@@ -6546,9 +6397,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
 
     if (amount.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('पहले payment amount डालें'),
-        ),
+        const SnackBar(content: Text('पहले payment amount डालें')),
       );
       return;
     }
@@ -6556,23 +6405,18 @@ class _QrScannerPageState extends State<QrScannerPage> {
     final parsedAmount = double.tryParse(amount);
 
     if (parsedAmount == null || parsedAmount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('सही amount डालें'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('सही amount डालें')));
       return;
     }
 
     final qrValue = _result.trim();
 
-    if (qrValue.isEmpty ||
-        qrValue == 'QR Code scan करें') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('पहले QR Code scan करें'),
-        ),
-      );
+    if (qrValue.isEmpty || qrValue == 'QR Code scan करें') {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('पहले QR Code scan करें')));
       return;
     }
 
@@ -6584,16 +6428,12 @@ class _QrScannerPageState extends State<QrScannerPage> {
       try {
         final original = Uri.parse(qrValue);
 
-        final params = Map<String, String>.from(
-          original.queryParameters,
-        );
+        final params = Map<String, String>.from(original.queryParameters);
 
         params['am'] = parsedAmount.toStringAsFixed(2);
         params['cu'] = 'INR';
 
-        paymentUri = original.replace(
-          queryParameters: params,
-        );
+        paymentUri = original.replace(queryParameters: params);
       } catch (_) {
         paymentUri = null;
       }
@@ -6619,11 +6459,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
 
     if (paymentUri == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Scanned QR में valid UPI ID नहीं मिली',
-          ),
-        ),
+        const SnackBar(content: Text('Scanned QR में valid UPI ID नहीं मिली')),
       );
       return;
     }
@@ -6636,21 +6472,13 @@ class _QrScannerPageState extends State<QrScannerPage> {
 
       if (!opened && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'कोई UPI payment app उपलब्ध नहीं है',
-            ),
-          ),
+          const SnackBar(content: Text('कोई UPI payment app उपलब्ध नहीं है')),
         );
       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Payment app open नहीं हो पाया',
-            ),
-          ),
+          const SnackBar(content: Text('Payment app open नहीं हो पाया')),
         );
       }
     }
@@ -6664,9 +6492,8 @@ class _QrScannerPageState extends State<QrScannerPage> {
 
   @override
   Widget build(BuildContext context) {
-    final canPay = _scanned &&
-        _result.trim().isNotEmpty &&
-        _result != 'QR Code scan करें';
+    final canPay =
+        _scanned && _result.trim().isNotEmpty && _result != 'QR Code scan करें';
 
     return Scaffold(
       appBar: AppBar(
@@ -6681,20 +6508,14 @@ class _QrScannerPageState extends State<QrScannerPage> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                MobileScanner(
-                  onDetect: _onDetect,
-                ),
+                MobileScanner(onDetect: _onDetect),
                 Center(
                   child: Container(
                     width: 250,
                     height: 250,
                     decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Colors.white,
-                        width: 3,
-                      ),
-                      borderRadius:
-                          BorderRadius.circular(18),
+                      border: Border.all(color: Colors.white, width: 3),
+                      borderRadius: BorderRadius.circular(18),
                     ),
                   ),
                 ),
@@ -6703,20 +6524,15 @@ class _QrScannerPageState extends State<QrScannerPage> {
                   left: 20,
                   right: 20,
                   child: Container(
-                    padding:
-                        const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.black54,
-                      borderRadius:
-                          BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Text(
                       'QR Code को box के अंदर रखें',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                      ),
+                      style: TextStyle(color: Colors.white, fontSize: 16),
                     ),
                   ),
                 ),
@@ -6732,10 +6548,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
                 children: [
                   const Text(
                     'Scan Result',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
 
                   const SizedBox(height: 8),
@@ -6745,18 +6558,13 @@ class _QrScannerPageState extends State<QrScannerPage> {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.orange.shade50,
-                      borderRadius:
-                          BorderRadius.circular(12),
-                      border: Border.all(
-                        color: Colors.orange.shade200,
-                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.orange.shade200),
                     ),
                     child: SelectableText(
                       _result,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 15,
-                      ),
+                      style: const TextStyle(fontSize: 15),
                     ),
                   ),
 
@@ -6764,8 +6572,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
 
                   TextField(
                     controller: _amountController,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(
+                    keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
                     decoration: InputDecoration(
@@ -6773,12 +6580,9 @@ class _QrScannerPageState extends State<QrScannerPage> {
                       hintText: 'उदाहरण: 500',
                       prefixText: '₹ ',
                       border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      prefixIcon: const Icon(
-                        Icons.currency_rupee,
-                      ),
+                      prefixIcon: const Icon(Icons.currency_rupee),
                     ),
                   ),
 
@@ -6787,11 +6591,8 @@ class _QrScannerPageState extends State<QrScannerPage> {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton.icon(
-                      onPressed:
-                          canPay ? _makeUpiPayment : null,
-                      icon: const Icon(
-                        Icons.payment,
-                      ),
+                      onPressed: canPay ? _makeUpiPayment : null,
+                      icon: const Icon(Icons.payment),
                       label: const Text(
                         'Pay Now',
                         style: TextStyle(
@@ -6800,12 +6601,8 @@ class _QrScannerPageState extends State<QrScannerPage> {
                         ),
                       ),
                       style: FilledButton.styleFrom(
-                        backgroundColor:
-                            Colors.green.shade700,
-                        padding:
-                            const EdgeInsets.symmetric(
-                          vertical: 14,
-                        ),
+                        backgroundColor: Colors.green.shade700,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                     ),
                   ),
@@ -6816,12 +6613,8 @@ class _QrScannerPageState extends State<QrScannerPage> {
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       onPressed: _scanAgain,
-                      icon: const Icon(
-                        Icons.qr_code_scanner,
-                      ),
-                      label: const Text(
-                        'Scan Again',
-                      ),
+                      icon: const Icon(Icons.qr_code_scanner),
+                      label: const Text('Scan Again'),
                     ),
                   ),
 
@@ -6830,10 +6623,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
                   const Text(
                     'Payment आपके फोन की UPI app में खुलेगा।',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 12,
-                    ),
+                    style: TextStyle(color: Colors.grey, fontSize: 12),
                   ),
                 ],
               ),
@@ -6847,112 +6637,421 @@ class _QrScannerPageState extends State<QrScannerPage> {
 
 // =========================================================
 // CENTER LOCATION
-// =========================================================
-
-class CenterLocationPage extends StatelessWidget {
+// ======================================
+class CenterLocationPage extends StatefulWidget {
   const CenterLocationPage({super.key});
 
+  @override
+  State<CenterLocationPage> createState() => _CenterLocationPageState();
+}
+
+class _CenterLocationPageState extends State<CenterLocationPage> {
   static const String address =
       'Jay Shree Ram Computer Center, '
       'Mansarovar Complex, 2nd Floor, '
       'Prashant Medical, Chhindwara, Madhya Pradesh';
 
-  Future<void> _openMaps(BuildContext context) async {
+  Position? _currentPosition;
+  StreamSubscription<Position>? _positionSubscription;
+
+  bool _tracking = false;
+  bool _loading = false;
+  String _status = 'Location tracking शुरू करने के लिए button दबाएँ';
+
+  @override
+  void dispose() {
+    _positionSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<bool> _checkLocationPermission() async {
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+
+    if (!serviceEnabled) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Phone की Location/GPS service ON करें'),
+          ),
+        );
+      }
+      return false;
+    }
+
+    var permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.denied) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Location permission allow करना जरूरी है'),
+          ),
+        );
+      }
+      return false;
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Location permission permanently denied है। '
+              'App Settings में जाकर permission allow करें।',
+            ),
+          ),
+        );
+      }
+      return false;
+    }
+
+    return true;
+  }
+
+  Future<void> _getCurrentLocation() async {
+    setState(() {
+      _loading = true;
+      _status = 'Current location प्राप्त हो रही है...';
+    });
+
+    try {
+      final allowed = await _checkLocationPermission();
+
+      if (!allowed) {
+        if (mounted) {
+          setState(() {
+            _loading = false;
+            _status = 'Location permission required';
+          });
+        }
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _currentPosition = position;
+        _loading = false;
+        _status = 'Current location मिल गई';
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _loading = false;
+        _status = 'Location प्राप्त नहीं हो सकी';
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('GPS Error: $e'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _startTracking() async {
+    final allowed = await _checkLocationPermission();
+
+    if (!allowed || !mounted) return;
+
+    await _positionSubscription?.cancel();
+
+    final settings = const LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 10,
+    );
+
+    setState(() {
+      _tracking = true;
+      _status = 'Student location tracking चालू है';
+    });
+
+    _positionSubscription =
+        Geolocator.getPositionStream(locationSettings: settings).listen(
+      (position) {
+        if (!mounted) return;
+
+        setState(() {
+          _currentPosition = position;
+          _status = 'Location updated';
+        });
+      },
+      onError: (error) {
+        if (!mounted) return;
+
+        setState(() {
+          _tracking = false;
+          _status = 'Tracking error';
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Tracking Error: $error')),
+        );
+      },
+    );
+  }
+
+  Future<void> _stopTracking() async {
+    await _positionSubscription?.cancel();
+    _positionSubscription = null;
+
+    if (!mounted) return;
+
+    setState(() {
+      _tracking = false;
+      _status = 'Location tracking बंद है';
+    });
+  }
+
+  Future<void> _openCurrentLocationInMaps() async {
+    final position = _currentPosition;
+
+    if (position == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('पहले current location प्राप्त करें'),
+        ),
+      );
+      return;
+    }
+
+    final uri = Uri.parse(
+      'https://www.google.com/maps/search/?api=1'
+      '&query=${position.latitude},${position.longitude}',
+    );
+
+    final opened = await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Google Maps open नहीं हो पाया'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _openCenterLocation() async {
     final query = Uri.encodeComponent(address);
 
     final uri = Uri.parse(
       'https://www.google.com/maps/search/?api=1&query=$query',
     );
 
-    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    final opened = await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
 
-    if (!opened && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Google Maps open नहीं हो पाया')),
-      );
-    }
-  }
-
-  Future<void> _callCenter(BuildContext context) async {
-    const phone = '';
-
-    if (phone.isEmpty) {
+    if (!opened && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Center mobile number अभी add नहीं किया गया है'),
+          content: Text('Google Maps open नहीं हो पाया'),
         ),
       );
-      return;
     }
-
-    final uri = Uri.parse('tel:$phone');
-
-    await launchUrl(uri);
   }
 
   @override
   Widget build(BuildContext context) {
+    final position = _currentPosition;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Center Location'),
+        title: const Text('Student GPS Location'),
         backgroundColor: Colors.orange,
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            const SizedBox(height: 20),
-            CircleAvatar(
-              radius: 55,
-              backgroundColor: Colors.orange.shade100,
-              child: Icon(
-                Icons.location_on,
-                size: 65,
-                color: Colors.orange.shade800,
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Jay Shree Ram Computer Center',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 23, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
             Card(
+              elevation: 4,
               child: Padding(
-                padding: const EdgeInsets.all(18),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                padding: const EdgeInsets.all(20),
+                child: Column(
                   children: [
-                    Icon(Icons.location_on, color: Colors.orange.shade800),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Text(
-                        address,
-                        style: TextStyle(fontSize: 16, height: 1.5),
+                    CircleAvatar(
+                      radius: 48,
+                      backgroundColor: Colors.orange.shade100,
+                      child: Icon(
+                        Icons.location_on,
+                        size: 58,
+                        color: Colors.orange.shade800,
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    const Text(
+                      'Student Current Location',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _status,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: _tracking
+                            ? Colors.green.shade700
+                            : Colors.grey.shade700,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+
+            const SizedBox(height: 16),
+
+            if (position != null)
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Column(
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.gps_fixed),
+                          SizedBox(width: 10),
+                          Text(
+                            'GPS Details',
+                            style: TextStyle(
+                              fontSize: 19,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Divider(height: 24),
+
+                      _locationRow(
+                        'Latitude',
+                        position.latitude.toStringAsFixed(6),
+                      ),
+                      _locationRow(
+                        'Longitude',
+                        position.longitude.toStringAsFixed(6),
+                      ),
+                      _locationRow(
+                        'Accuracy',
+                        '${position.accuracy.toStringAsFixed(1)} m',
+                      ),
+                      _locationRow(
+                        'Speed',
+                        '${position.speed.toStringAsFixed(1)} m/s',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+            const SizedBox(height: 16),
+
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                onPressed: () => _openMaps(context),
-                icon: const Icon(Icons.map),
-                label: const Text('Open in Google Maps'),
+                onPressed: _loading ? null : _getCurrentLocation,
+                icon: _loading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Icon(Icons.my_location),
+                label: Text(
+                  _loading
+                      ? 'Getting Location...'
+                      : 'Get Current Location',
+                ),
               ),
             ),
-            const SizedBox(height: 12),
+
+            const SizedBox(height: 10),
+
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _tracking ? _stopTracking : _startTracking,
+                icon: Icon(
+                  _tracking ? Icons.stop : Icons.play_arrow,
+                ),
+                label: Text(
+                  _tracking
+                      ? 'Stop Student Tracking'
+                      : 'Start Student Tracking',
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor:
+                      _tracking ? Colors.red : Colors.green,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            if (position != null)
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _openCurrentLocationInMaps,
+                  icon: const Icon(Icons.map),
+                  label: const Text('Open Student Location in Maps'),
+                ),
+              ),
+
+            const SizedBox(height: 10),
+
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: () => _callCenter(context),
-                icon: const Icon(Icons.call),
-                label: const Text('Call Center'),
+                onPressed: _openCenterLocation,
+                icon: const Icon(Icons.business),
+                label: const Text('Open Center Location'),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            Card(
+              color: Colors.orange.shade50,
+              child: const Padding(
+                padding: EdgeInsets.all(14),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.info_outline),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'GPS tracking student की permission के बाद '
+                        'visible foreground tracking के रूप में चलता है। '
+                        'Tracking बंद करने के लिए Stop button दबाएँ।',
+                        style: TextStyle(height: 1.4),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -6960,8 +7059,28 @@ class CenterLocationPage extends StatelessWidget {
       ),
     );
   }
-}
 
+  Widget _locationRow(String title, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 95,
+            child: Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+          Expanded(
+            child: Text(value),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class AdminProfilePage extends StatefulWidget {
   const AdminProfilePage({super.key});
@@ -7015,10 +7134,9 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
 
         username =
             prefs.getString(AdminLoginPage.adminUsernameKey) ??
-                AdminLoginPage.defaultAdminUsername;
+            AdminLoginPage.defaultAdminUsername;
 
-        final oldPassword =
-            prefs.getString(AdminLoginPage.adminPasswordKey);
+        final oldPassword = prefs.getString(AdminLoginPage.adminPasswordKey);
 
         await secure.write(
           key: AdminLoginPage.adminUsernameKey,
@@ -7040,7 +7158,8 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
 
       setState(() {
         _currentUsername = username ?? AdminLoginPage.defaultAdminUsername;
-        _usernameController.text = username ?? AdminLoginPage.defaultAdminUsername;
+        _usernameController.text =
+            username ?? AdminLoginPage.defaultAdminUsername;
         _loading = false;
       });
     } catch (e) {
@@ -7078,9 +7197,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
     if (newPassword.length < 8) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'New password must contain at least 8 characters.',
-          ),
+          content: Text('New password must contain at least 8 characters.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -7105,13 +7222,10 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
       final secure = AdminLoginPage.secureStorage;
 
       final savedPassword =
-          await secure.read(
-            key: AdminLoginPage.adminPasswordKey,
-          ) ??
+          await secure.read(key: AdminLoginPage.adminPasswordKey) ??
           AdminLoginPage.defaultAdminPassword;
 
-      final currentPassword =
-          _currentPasswordController.text;
+      final currentPassword = _currentPasswordController.text;
 
       if (currentPassword != savedPassword) {
         if (!mounted) return;
@@ -7151,9 +7265,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Admin login credentials updated securely!',
-          ),
+          content: Text('Admin login credentials updated securely!'),
           backgroundColor: Colors.green,
         ),
       );
@@ -7184,9 +7296,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
       labelText: label,
       prefixIcon: Icon(icon),
       suffixIcon: suffixIcon,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
     );
   }
 
@@ -7199,11 +7309,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
         foregroundColor: Colors.white,
       ),
       body: _loading
-          ? const Center(
-              child: CircularProgressIndicator(
-                color: Colors.orange,
-              ),
-            )
+          ? const Center(child: CircularProgressIndicator(color: Colors.orange))
           : SafeArea(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(18),
@@ -7241,9 +7347,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                               const SizedBox(height: 6),
                               Text(
                                 'Current username: $_currentUsername',
-                                style: const TextStyle(
-                                  color: Colors.grey,
-                                ),
+                                style: const TextStyle(color: Colors.grey),
                               ),
                             ],
                           ),
@@ -7388,9 +7492,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                                 )
                               : const Icon(Icons.save),
                           label: Text(
-                            _saving
-                                ? 'Saving...'
-                                : 'SAVE LOGIN CHANGES',
+                            _saving ? 'Saving...' : 'SAVE LOGIN CHANGES',
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.orange,
@@ -7410,18 +7512,13 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(
-                                Icons.info_outline,
-                                color: Colors.orange,
-                              ),
+                              Icon(Icons.info_outline, color: Colors.orange),
                               SizedBox(width: 12),
                               Expanded(
                                 child: Text(
                                   'Username aur password change karne ke liye '
                                   'pehle current password enter karna zaroori hai.',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                  ),
+                                  style: TextStyle(fontSize: 13),
                                 ),
                               ),
                             ],
