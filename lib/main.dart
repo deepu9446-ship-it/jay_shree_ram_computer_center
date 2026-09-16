@@ -2601,6 +2601,8 @@ class Student {
   String admissionNo;
   String rollNo;
   String? photoPath;
+  String? attachmentPath;
+  String? attachmentName;
 
   Student({
     required this.studentName,
@@ -2619,6 +2621,8 @@ class Student {
     required this.admissionNo,
     required this.rollNo,
     this.photoPath,
+    this.attachmentPath,
+    this.attachmentName,
   });
 }
 
@@ -2942,6 +2946,7 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
   String gender = 'Male';
 
   File? selectedPhoto;
+  PlatformFile? selectedAdmissionAttachment;
   File? selectedSignature;
 
   final ImagePicker _picker = ImagePicker();
@@ -2979,6 +2984,18 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
       rollNo.text = s.rollNo;
       gender = s.gender;
       signaturePath = s.signaturePath;
+    if (s.attachmentPath != null &&
+        s.attachmentPath!.isNotEmpty) {
+      selectedAdmissionAttachment = PlatformFile(
+        name: (s.attachmentName != null &&
+                s.attachmentName!.isNotEmpty)
+            ? s.attachmentName!
+            : 'Admission Document',
+        size: 0,
+        path: s.attachmentPath,
+      );
+    }
+
 
       if (s.photoPath != null && s.photoPath!.isNotEmpty) {
         selectedPhoto = File(s.photoPath!);
@@ -3050,6 +3067,47 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
     }
   }
 
+  Future<void> pickAdmissionAttachment() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: [
+          'pdf',
+          'jpg',
+          'jpeg',
+          'png',
+          'doc',
+          'docx',
+        ],
+        withData: false,
+      );
+
+      if (result != null &&
+          result.files.isNotEmpty &&
+          mounted) {
+        setState(() {
+          selectedAdmissionAttachment = result.files.first;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Document select nahi ho saka: $e',
+          ),
+        ),
+      );
+    }
+  }
+
+  void removeAdmissionAttachment() {
+    setState(() {
+      selectedAdmissionAttachment = null;
+    });
+  }
+
   void saveStudent() {
     if (!formKey.currentState!.validate()) {
       return;
@@ -3072,6 +3130,8 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
       rollNo: rollNo.text.trim(),
       photoPath: selectedPhoto?.path,
       signaturePath: signaturePath,
+      attachmentPath: selectedAdmissionAttachment?.path,
+      attachmentName: selectedAdmissionAttachment?.name,
     );
 
     if (widget.index != null) {
@@ -3095,51 +3155,26 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
   }
 
   void deleteStudent() {
-    final index = widget.index;
-
-    if (index == null) {
+    if (widget.index == null ||
+        widget.index! < 0 ||
+        widget.index! >= students.length) {
       return;
     }
 
-    showDialog(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Delete Student'),
-          content: const Text(
-            'Kya aap is student ko delete karna chahte hain?',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext);
-              },
-              child: const Text('CANCEL'),
-            ),
-            FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () {
-                students.removeAt(index);
+    final index = widget.index!;
 
-                Navigator.pop(dialogContext);
-                Navigator.pop(context);
+    setState(() {
+      students.removeAt(index);
+    });
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Student deleted successfully'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
-              child: const Text('DELETE'),
-            ),
-          ],
-        );
-      },
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Student deleted successfully'),
+        behavior: SnackBarBehavior.floating,
+      ),
     );
+
+    Navigator.pop(context);
   }
 
   void clearForm() {
@@ -3318,6 +3353,49 @@ class _StudentProfilePageState extends State<StudentProfilePage> {
             field('Admission Number', admissionNo, Icons.confirmation_number),
 
             field('Roll Number', rollNo, Icons.badge),
+            Card(
+              elevation: 2,
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Colors.orange.shade100,
+                  child: const Icon(
+                    Icons.attach_file,
+                    color: Colors.orange,
+                  ),
+                ),
+                title: Text(
+                  selectedAdmissionAttachment == null
+                      ? 'Attach Admission Document'
+                      : selectedAdmissionAttachment!.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: Text(
+                  selectedAdmissionAttachment == null
+                      ? 'PDF, JPG, PNG, DOC, DOCX'
+                      : 'Document attached successfully',
+                ),
+                trailing: selectedAdmissionAttachment == null
+                    ? const Icon(
+                        Icons.upload_file,
+                        color: Colors.orange,
+                      )
+                    : IconButton(
+                        icon: const Icon(
+                          Icons.close,
+                          color: Colors.red,
+                        ),
+                        tooltip: 'Remove Attachment',
+                        onPressed: removeAdmissionAttachment,
+                      ),
+                onTap: pickAdmissionAttachment,
+              ),
+            ),
+            const SizedBox(height: 10),
+
 
             const SizedBox(height: 10),
 
