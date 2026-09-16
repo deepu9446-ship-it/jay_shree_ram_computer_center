@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AttendancePage extends StatefulWidget {
   final String? studentId;
@@ -21,6 +22,7 @@ class AttendancePage extends StatefulWidget {
 
 class _AttendancePageState extends State<AttendancePage> {
   final _nameController = TextEditingController();
+  final _mobileController = TextEditingController();
   final _studentIdController = TextEditingController();
   final _courseController = TextEditingController();
 
@@ -408,6 +410,52 @@ class _AttendancePageState extends State<AttendancePage> {
     await _showAttendanceDialog();
   }
 
+
+  Future<void> _sendAttendanceNotification() async {
+    final name = _nameController.text.trim();
+    final mobile = _mobileController.text.trim();
+
+    if (name.isEmpty) {
+      _showMessage('Student Name उपलब्ध नहीं है।');
+      return;
+    }
+
+    if (mobile.isEmpty) {
+      _showMessage('Mobile Number उपलब्ध नहीं है।');
+      return;
+    }
+
+    final cleanMobile = mobile.replaceAll(RegExp(r'[^0-9+]'), '');
+
+    final message =
+        'Dear $name, आपकी आज की attendance '
+        'Jay Shree Ram Computer Center में Present दर्ज हो गई है. '
+        'धन्यवाद।';
+
+    final smsUri = Uri(
+      scheme: 'sms',
+      path: cleanMobile,
+      queryParameters: <String, String>{
+        'body': message,
+      },
+    );
+
+    try {
+      final launched = await launchUrl(
+        smsUri,
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!launched && mounted) {
+        _showMessage('SMS app open नहीं हो पाया।');
+      }
+    } catch (e) {
+      if (mounted) {
+        _showMessage('SMS notification error: $e');
+      }
+    }
+  }
+
   Future<void> _showAttendanceDialog() async {
     final now = DateTime.now();
 
@@ -458,12 +506,24 @@ class _AttendancePageState extends State<AttendancePage> {
             ],
           ),
           actions: [
-            FilledButton(
+            TextButton(
               onPressed: () {
                 Navigator.pop(context);
                 _resetVerification();
               },
-              child: const Text('Done'),
+              child: const Text('Skip'),
+            ),
+            FilledButton.icon(
+              onPressed: () async {
+                Navigator.pop(context);
+                await _sendAttendanceNotification();
+
+                if (!mounted) return;
+
+                _resetVerification();
+              },
+              icon: const Icon(Icons.sms),
+              label: const Text('Send SMS'),
             ),
           ],
         );
@@ -523,6 +583,7 @@ class _AttendancePageState extends State<AttendancePage> {
     _faceDetector.close();
 
     _nameController.dispose();
+    _mobileController.dispose();
     _studentIdController.dispose();
     _courseController.dispose();
 
@@ -566,6 +627,17 @@ class _AttendancePageState extends State<AttendancePage> {
                       decoration: const InputDecoration(
                         labelText: 'Student Name',
                         prefixIcon: Icon(Icons.person),
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _mobileController,
+                      keyboardType: TextInputType.phone,
+                      decoration: const InputDecoration(
+                        labelText: 'Mobile Number',
+                        hintText: 'SMS notification के लिए mobile number',
+                        prefixIcon: Icon(Icons.phone),
                         border: OutlineInputBorder(),
                       ),
                     ),
