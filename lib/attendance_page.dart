@@ -1,4 +1,6 @@
+import 'dart:io';
 
+import 'package:path_provider/path_provider.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -317,10 +319,9 @@ class _AttendancePageState extends State<AttendancePage> {
     final dateKey =
         '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
 
-    // Student ID + Date = unique attendance key
     final attendanceKey = 'attendance_${studentId}_$dateKey';
 
-    // Same student की आज की attendance पहले से marked है या नहीं
+    // आज की attendance पहले से है तो दोबारा photo/attendance न लें
     if (prefs.getBool(attendanceKey) == true) {
       _attendanceMarked = true;
 
@@ -374,25 +375,119 @@ class _AttendancePageState extends State<AttendancePage> {
       return;
     }
 
+    // =====================================================
+    // Attendance के समय photo capture और save करें
+    // =====================================================
+    String? attendancePhotoPath;
+
+    try {
+      final controller = _cameraController;
+
+      if (controller != null &&
+          controller.value.isInitialized &&
+          !controller.value.isTakingPicture) {
+
+        // Image stream चालू है तो पहले उसे बंद करें
+        if (controller.value.isStreamingImages) {
+          await controller.stopImageStream();
+        }
+
+        await Future.delayed(
+          const Duration(milliseconds: 200),
+        );
+
+        if (controller.value.isInitialized &&
+            !controller.value.isTakingPicture) {
+
+          final XFile photo = await controller.takePicture();
+
+          final appDir =
+              await getApplicationDocumentsDirectory();
+
+          final attendanceDir = Directory(
+            '${appDir.path}/attendance_photos',
+          );
+
+          if (!await attendanceDir.exists()) {
+            await attendanceDir.create(
+              recursive: true,
+            );
+          }
+
+          final safeStudentId = studentId.replaceAll(
+            RegExp(r'[^a-zA-Z0-9_-]'),
+            '_',
+          );
+
+          final fileName =
+              '${safeStudentId}_${now.year}'
+              '${now.month.toString().padLeft(2, '0')}'
+              '${now.day.toString().padLeft(2, '0')}_'
+              '${now.hour.toString().padLeft(2, '0')}'
+              '${now.minute.toString().padLeft(2, '0')}'
+              '${now.second.toString().padLeft(2, '0')}.jpg';
+
+          final savedPhoto = await File(photo.path).copy(
+            '${attendanceDir.path}/$fileName',
+          );
+
+          attendancePhotoPath = savedPhoto.path;
+
+          debugPrint(
+            'Attendance photo saved: $attendancePhotoPath',
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint(
+        'Attendance photo capture/save error: $e',
+      );
+    }
+
+    // =====================================================
     // Attendance permanently save करें
+    // =====================================================
     await prefs.setBool(attendanceKey, true);
-    await prefs.setString('${attendanceKey}_name', name);
-    await prefs.setString('${attendanceKey}_studentId', studentId);
-    await prefs.setString('${attendanceKey}_course', course);
+
+    await prefs.setString(
+      '${attendanceKey}_name',
+      name,
+    );
+
+    await prefs.setString(
+      '${attendanceKey}_studentId',
+      studentId,
+    );
+
+    await prefs.setString(
+      '${attendanceKey}_course',
+      course,
+    );
+
     await prefs.setString(
       '${attendanceKey}_date',
       '${now.day}/${now.month}/${now.year}',
     );
+
     await prefs.setString(
       '${attendanceKey}_time',
       '${now.hour.toString().padLeft(2, '0')}:'
       '${now.minute.toString().padLeft(2, '0')}:'
       '${now.second.toString().padLeft(2, '0')}',
     );
+
     await prefs.setString(
       '${attendanceKey}_verification',
       'Face + Eye Blink Verified',
     );
+
+    // Attendance के साथ photo का path भी save करें
+    if (attendancePhotoPath != null) {
+      await prefs.setString(
+        '${attendanceKey}_photoPath',
+        attendancePhotoPath,
+      );
+    }
 
     _attendanceMarked = true;
 
@@ -401,11 +496,14 @@ class _AttendancePageState extends State<AttendancePage> {
         _status =
             '✅ Face Verification Successful\n'
             '✅ Eye Blink Verification Successful\n'
+            '📸 Attendance Photo Saved\n'
             '💾 Attendance Saved Successfully!';
       });
     }
 
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(
+      const Duration(milliseconds: 500),
+    );
 
     await _showAttendanceDialog();
   }
