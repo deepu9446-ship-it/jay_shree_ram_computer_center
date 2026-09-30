@@ -4808,12 +4808,48 @@ class _ReportsManagementPageState extends State<ReportsManagementPage> {
 
     return Column(
       children: _attendanceRecords.map((record) {
+        final photoPath = record['photoPath']?.toString() ?? '';
+        final hasPhoto =
+            photoPath.isNotEmpty && File(photoPath).existsSync();
+
         return Card(
           margin: const EdgeInsets.only(bottom: 10),
           child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Colors.green.shade100,
-              child: const Icon(Icons.verified, color: Colors.green),
+            leading: GestureDetector(
+              onTap: hasPhoto
+                  ? () {
+                      showDialog(
+                        context: context,
+                        builder: (dialogContext) {
+                          return Dialog(
+                            child: InteractiveViewer(
+                              child: Image.file(
+                                File(photoPath),
+                                fit: BoxFit.contain,
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    }
+                  : null,
+              child: hasPhoto
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(
+                        File(photoPath),
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                  : CircleAvatar(
+                      backgroundColor: Colors.green.shade100,
+                      child: const Icon(
+                        Icons.verified,
+                        color: Colors.green,
+                      ),
+                    ),
             ),
             title: Text(
               record['name'].toString().isEmpty
@@ -4826,7 +4862,8 @@ class _ReportsManagementPageState extends State<ReportsManagementPage> {
               'Course: ${record['course']}\n'
               'Date: ${record['date']}   '
               'Time: ${record['time']}\n'
-              '✓ ${record['verification']}',
+              '✓ ${record['verification']}\n'
+              '${hasPhoto ? '📸 Attendance Photo Attached' : '📷 Photo Not Available'}',
             ),
             isThreeLine: true,
           ),
