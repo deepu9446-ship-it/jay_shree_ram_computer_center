@@ -4617,6 +4617,9 @@ class _ReportsManagementPageState extends State<ReportsManagementPage> {
             prefs.getString('${key}_verification') ??
             'Face + Eye Blink Verified';
 
+        final photoPath =
+            prefs.getString('${key}_photoPath') ?? '';
+
         _attendanceRecords.add({
           'key': key,
           'name': name,
@@ -4625,6 +4628,7 @@ class _ReportsManagementPageState extends State<ReportsManagementPage> {
           'date': date,
           'time': time,
           'verification': verification,
+          'photoPath': photoPath,
         });
       }
 
