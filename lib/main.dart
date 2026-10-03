@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'excel_export.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -5027,6 +5028,51 @@ class _ReportsManagementPageState extends State<ReportsManagementPage> {
     }
   }
 
+  Future<void> _exportExcel() async {
+    if (_loading) {
+      return;
+    }
+
+    try {
+      setState(() {
+        _loading = true;
+      });
+
+      final savedPath = await JsrcExcelExporter.exportAllData();
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            savedPath == null || savedPath.isEmpty
+                ? 'Excel export cancel किया गया।'
+                : 'Excel report successfully save हो गई।',
+          ),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Excel export failed: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        await _loadReports();
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -5035,6 +5081,11 @@ class _ReportsManagementPageState extends State<ReportsManagementPage> {
         backgroundColor: Colors.orange,
         foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            tooltip: 'Export All Data to Excel',
+            onPressed: _loading ? null : _exportExcel,
+            icon: const Icon(Icons.file_download),
+          ),
           IconButton(
             tooltip: 'Refresh Reports',
             onPressed: _loading ? null : _loadReports,
